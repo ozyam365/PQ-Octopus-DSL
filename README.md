@@ -17,7 +17,7 @@ PHP is powerful, but its syntax tends to be verbose. jQuery solved a similar pro
 
 PHP is already powerful. But we keep writing the same boilerplate.
 
-php
+##php
 $page = isset($_GET['page']) ? trim($_GET['page']) : 1;
 if (!is_numeric($page)) { $page = 1; }
 $page = (int)$page;
@@ -26,7 +26,7 @@ Four lines for logic that feels like it should take one. isset(), a ternary, a t
 
 PQ collapses that repetition into a single chain.
 
-pq
+##pq
 @page = form.get("page").trim().val(1).int();
 Borrowed from jQuery
 
