@@ -58,20 +58,20 @@ PQ-Octopus-DSL/
 
 | #  | Category              |              PHP             |               PQ           |
 |----|-----------------------|------------------------------|----------------------------|
-| 01 | Opening / Output      |  `<?php echo "php"; ?>`      |     `[[ print "pq"; ]]`    |
-| 02 | Variable              |            `$`               |              `@`           |
-| 03 | Object Initialization |       `new class();`         |      `#object = obj();`    |
-| 04 | Object Access         |       `$user->name`          |      `#object.name`        |
-| 05 | Object Definition     |       `class Name {}`        |       `#object = []`       |
-| 06 | Object Inheritance    |  `class Name extends sub {}` |    `#parent.child = []`    |
-| 07 | Object Reference      |   `$variable = $variable;`   |    `#object = #object;`    |
-| 08 | Array (Collection)    |        `array()` or `[]`     |            `$`             |
-| 09 | Chaining              |              `->`            |            `.`             |
-| 10 | File Inclusion        |           `include "";`      |          `inc "";`         |
-| 11 | Short Output          |         `<?= $aaa; ?>`       |         `[[=@aaa]]`        |
-| 12 | Function              |    `function name() {}`      |       `fn name() {}`       |
-| 13 | Comment               |        `# comment`           |       `## comment`         |
-| 14 | Control Flow          |    `if($a > 1) {} else {}`   | `if(@a > 1): else: endif;` |
+| 01 | Opening / Output      |   <?php echo "php"; ?>       |      [[ print "pq"; ]]     |
+| 02 | Variable              |            $                 |              @             |
+| 03 | Object Initialization |       new class();           |      #object = obj();      |
+| 04 | Object Access         |       $user->name            |      #object.name          |
+| 05 | Object Definition     |       class Name {}          |       #object = []         |
+| 06 | Object Inheritance    |  class Name extends sub {}   |    #parent.child = []      |
+| 07 | Object Reference      |   $variable = $variable;     |    #object = #object;      |
+| 08 | Array (Collection)    |        array() or []         |            $               |
+| 09 | Chaining              |              ->              |            .               |
+| 10 | File Inclusion        |           include "";        |          inc "";           |
+| 11 | Short Output          |         <?= $aaa; ?>         |         [[=@aaa]]          |
+| 12 | Function              |    function name() {}        |       fn name() {}         |
+| 13 | Comment               |        # comment             |       ## comment           |
+| 14 | Control Flow          |    if($a > 1) {} else {}     |   if(@a > 1): else: endif; |
 
 > **PQ Reference**
 >
