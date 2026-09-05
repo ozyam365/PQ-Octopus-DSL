@@ -7,7 +7,7 @@ PQ combines familiar PHP concepts with concise syntax, chaining, utility functio
 
 > **Status:** Beta / Active Development
 
-📦 **[Download Full Installation Package (Google Drive)]([[YOUR_GOOGLE_DRIVE_LINK](https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO)]**
+📦 **[Download Full Installation Package (Google Drive)]([[GOOGLE_DRIVE_LINK](https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO)]**
 
 ## Why PQ?
 
