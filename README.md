@@ -36,11 +36,19 @@ Instead, PQ is designed to work **with PHP** and make common web-development tas
 The project is organized around a core engine and an extension system.
 
 ```text
+## Project Structure
+
+```text
 PQ-Octopus-DSL/
-├── assets/      # PQ asset file
-├── attach/      # PQ attach directory
-├── html/        # PQ display directory
-├── pq/          # PQ DSL directory
-├── set/         # set directory
-├── README.md
-└── LICENSE
+├── assets/     # External libraries and web assets
+├── attach/     # Uploaded files and attachments
+├── html/       # HTML layouts and web resources
+├── pq/         # PQ core system
+│   ├── core/   # PQ core functions
+│   ├── engine/ # PQ parser and runtime engine
+│   ├── plugin/ # PQ plugins
+│   └── tmp/    # Temporary files
+├── set/        # Environment and configuration
+├── run.php     # PQ entry point
+├── init.pq     # PQ initialization
+└── tbl.pq      # Table-related definitions
