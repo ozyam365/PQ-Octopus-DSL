@@ -1,0 +1,126 @@
+body {
+    background-color: #DEDEDE; /* 외곽 배경 그레이 */
+}
+.pq-sidebar {
+    background-color: #ffffff; /* 메뉴 사이드바는 하얀색 */
+}
+/* 사이드바 접기/펴기 화살표 애니메이션 */
+.btn-toggle::before {
+  width: 1.25em;
+  line-height: 0;
+  content: url("data:image/svg+xml,%3csvg xmlns='http://w3.org' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%280,0,0,.5%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+  transition: transform .35s ease;
+  transform-origin: .5em 50%;
+}
+.btn-toggle[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+.btn-toggle-nav a {
+  display: inline-flex;
+  padding: .1875rem .5rem;
+  margin-top: .125rem;
+  margin-left: 1.25rem;
+  text-decoration: none;
+}
+.btn-toggle-nav a:hover {
+  background-color: #d2f4ea;
+}
+/* /assets/css/base.css 에 덮어쓰기 */
+
+/* 화살표 강제 소환 */
+.btn-toggle {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: .5rem;
+    font-weight: 700 !important; /* 글자 두껍게 */
+    color: rgba(0, 0, 0, .85);
+    background-color: transparent;
+    border: 0;
+    text-align: left;
+}
+
+/* 화살표 아이콘 영역 생성 */
+.btn-toggle::before {
+    content: ""; /* 반드시 필요 */
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    /* 직접 그린 화살표 아이콘 */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://w3.org' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%280,0,0,.5%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-size: contain;
+    transition: transform .3s ease;
+}
+
+/* 펼쳐졌을 때 90도 회전 */
+.btn-toggle[aria-expanded="true"]::before {
+    transform: rotate(90deg);
+}
+
+/* 하단 메뉴 밑줄 완벽 제거 */
+.btn-toggle-nav a {
+    text-decoration: none !important;
+    color: #495057;
+    padding: 3px 10px;
+    display: block;
+    margin-left: 24px;
+}
+.btn-toggle-nav a:hover {
+    background-color: #f1f3f5;
+    border-radius: 4px;
+}
+/* /assets/css/base.css */
+
+.btn-toggle {
+    display: flex !important;
+    align-items: center !important;
+    width: 100%;
+    padding: .5rem .75rem !important;
+    font-weight: 700 !important;
+    color: rgba(0, 0, 0, .85);
+    background-color: transparent;
+    border: 0;
+    text-align: left;
+}
+
+.btn-toggle::before {
+    content: "" !important;
+    display: inline-block !important;
+    width: 7px !important;  /* 앙증맞은 사이즈 */
+    height: 7px !important;
+    margin-right: 12px !important;
+    
+    /* 선 두께와 색상 */
+    border-top: 2px solid #444 !important;
+    border-right: 2px solid #444 !important;
+    
+    /* ??? 중심 수사: 텍스트와 중앙을 맞추기 위한 수직 정렬 */
+    vertical-align: middle !important;
+    position: relative !important;
+    top: 0px !important; 
+    
+    /* 기본 회전값 (오른쪽 꺽쇠) */
+    transform: rotate(45deg) !important; 
+    transition: transform 0.2s ease !important;
+    
+    /* ?? 회전의 중심축을 중앙으로 고정 */
+    transform-origin: center !important; 
+}
+
+/* ? 펼쳐졌을 때: 45도에서 135도로 회전 (아래 방향) */
+.btn-toggle[aria-expanded="true"]::before {
+    transform: rotate(135deg) !important;
+    top: 0px !important; /* ?? 회전 시 무게중심 이동을 고려한 미세 보정 */
+}
+
+/* 하위 메뉴 간격 */
+.btn-toggle-nav a {
+    text-decoration: none !important;
+    color: #666;
+    padding: 3px 10px;
+    display: block;
+    margin-left: 24px;
+    font-size: 14px;
+}
