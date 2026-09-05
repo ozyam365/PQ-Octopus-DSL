@@ -18,17 +18,20 @@ PHP is powerful, but its syntax tends to be verbose. jQuery solved a similar pro
 PHP is already powerful. But we keep writing the same boilerplate.
 
 <pre><code>
-php
- $page = isset($_GET['page']) ? trim($_GET['page']) : 1;
- if (!is_numeric($page)) { $page = 1; }
- $page = (int)$page;
+*php*
+$page = isset($_GET['page']) ? trim($_GET['page']) : 1;
+if (!is_numeric($page)) { $page = 1; }
+$page = (int)$page;
 </code></pre>
 Four lines for logic that feels like it should take one. isset(), a ternary, a type check, a cast — you write it the same way every time, and every code review reminds you the pattern never changes.
 
 PQ collapses that repetition into a single chain.
 
-> pq
-> @page = form.get("page").trim().val(1).int();
+<pre><code>
+*pq*
+@page = form.get("page").trim().val(1).int();
+</code></pre>
+
 Borrowed from jQuery
 
 > $(el).find(".item").addClass("active").show();
