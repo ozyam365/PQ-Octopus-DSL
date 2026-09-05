@@ -37,7 +37,10 @@ The project is organized around a core engine and an extension system.
 
 ```text
 PQ-Octopus-DSL/
-├── core/        # PQ core engine
-├── plugin/      # Optional extensions and plugins
+├── assets/      # PQ asset file
+├── attach/      # PQ attach directory
+├── html/        # PQ display directory
+├── pq/          # PQ DSL directory
+├── set/         # set directory
 ├── README.md
 └── LICENSE
