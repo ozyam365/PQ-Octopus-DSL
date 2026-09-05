@@ -11,14 +11,49 @@ PQ combines familiar PHP concepts with concise syntax, chaining, utility functio
 📦 **[Download Full Installation Package (Google Drive)]([[PQ-Octopus-DSL download](https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO)]**
 
 ## Why PQ?
+Why doesn't PHP have a DSL like this?
 
-PHP is powerful and flexible, but web development often requires a large amount of repetitive syntax.
+PHP is powerful, but its syntax tends to be verbose. jQuery solved a similar problem for the DOM, turning manipulation into elegant chains. PQ extends that same chaining philosophy across the entire PHP server-side layer — variables, databases, loops, and form handling.
 
-PQ aims to provide a simpler development layer while keeping the strengths of PHP underneath.
+PHP is already powerful. But we keep writing the same boilerplate.
 
-The goal is not to replace PHP.
+php
+$page = isset($_GET['page']) ? trim($_GET['page']) : 1;
+if (!is_numeric($page)) { $page = 1; }
+$page = (int)$page;
 
-Instead, PQ is designed to work **with PHP** and make common web-development tasks more concise.
+Four lines for logic that feels like it should take one. isset(), a ternary, a type check, a cast — you write it the same way every time, and every code review reminds you the pattern never changes.
+
+PQ collapses that repetition into a single chain.
+
+pq
+@page = form.get("page").trim().val(1).int();
+Borrowed from jQuery
+
+$(el).find(".item").addClass("active").show();
+
+Think about why that line felt so good to write. Finding, manipulating, and producing a result read as one continuous flow — no intermediate variables, no nested conditionals.
+
+PQ brings that same feeling to the entire backend.
+
+Area	PQ chaining example
+Form handling	form.get("keyword").trim().val("").string();
+Database queries	db.pq_bbs_data.where("idx = '1'").row();
+Return-value casting	#row.array() / .json() / .object()
+Bulk variable init	pin(@a, @b, @c).val(0);
+Less syntax, not less power
+
+PQ doesn't replace PHP. Every .pq file compiles down to PHP and runs as PHP, and you can freely mix in plain PHP syntax whenever you need to.
+
+Four loop styles (foreach, foreach-key, for, while) unified into one repeat() ~ endrepeat;
+Exception handling via rule ~ .fail() ~ endrule; instead of try/catch
+Dedicated blocks has() and blank() in place of isset() and empty()
+Three symbols — @ (variable), # (object), $ (array) — so you can tell what kind of data you're looking at, at a glance
+The point
+
+PQ isn't asking you to learn a new language. It's PHP you already know, with the chaining feel of jQuery you already like, layered on top.
+
+Cut the verbosity. Compress the repetition. Let the code read the way it flows. That's all PQ is trying to do.
 
 ## Main Features
 
