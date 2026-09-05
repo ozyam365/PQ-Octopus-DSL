@@ -186,7 +186,7 @@ write/edit page.
 
 	inc "/path/html/bbs/skin/@skin_dir/bbs.pq";
 ]]
-<hr/>
+
 What this example demonstrates
 @ variables
 # objects
