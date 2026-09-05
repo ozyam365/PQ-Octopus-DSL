@@ -1,0 +1,122 @@
+
+.bd-calltop { 
+	  border-radius: 10px; padding: 18px 16px; transition: all 0.2s ease;
+}
+
+.bd-calltop-info { background: linear-gradient(135deg, #F0FCFF 0%, #E6F7FA 100%); border-top: 3px solid #00C8CC; }
+.bd-calltop-info .title { color: #00C8CC }
+.bd-calltop-warning { background: linear-gradient(135deg, #FFFDE8 0%, #FFF9A6 100%); border-top: 3px solid #CCBD00;  }
+.bd-calltop-warning .title { color: ##CCBD00 }
+.bd-calltop-danger { background: linear-gradient(135deg, #FFE1D9 0%, #FFC6B7 100%);  border-top: 3px solid #CC2C00; }
+.bd-calltop-danger .title { color: #CC2C00}
+.bd-calltop-primary{ background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fa 100%);border-top: 3px solid #0088cc; }
+.bd-calltop-primary .title { color: #0088cc}
+.bd-calltop-success{ background: linear-gradient(135deg, #E6F7F1 0%, #B5E8D6 100%); border-top: 3px solid #29775F; }
+.bd-calltop-success .title { color: #29775F }
+.bd-calltop-default{ background: linear-gradient(135deg, #F0F2FF 0%, #E6EAFA 100%); border-top: 3px solid #0048CC;  }
+.bd-calltop-default .title { color: #0048CC }
+
+.bd-callout { 
+	 border-radius: 8px; padding: 18px 20px; margin: 20px 0 25px 0; box-shadow: 0 2px 6px rgba(0, 136, 204, 0.06);
+}
+
+.bd-callout-info { background: linear-gradient(135deg, #F0FCFF 0%, #E6F7FA 100%); border-left: 4px solid #00C8CC; }
+.bd-callout-info .title { color: #00C8CC }
+.bd-callout-warning { background: linear-gradient(135deg, #FFFDE8 0%, #FFF9A6 100%); border-left: 4px solid #CCBD00;  }
+.bd-callout-warning .title { color: ##CCBD00 }
+.bd-callout-danger { background: linear-gradient(135deg, #FFE1D9 0%, #FFC6B7 100%);  border-left: 4px solid #CC2C00; }
+.bd-callout-danger .title { color: #CC2C00}
+.bd-callout-primary{ background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fa 100%);border-left: 4px solid #0088cc; }
+.bd-callout-primary .title { color: #0088cc}
+.bd-callout-success{ background: linear-gradient(135deg, #E6F7F1 0%, #B5E8D6 100%); border-left: 4px solid #29775F; }
+.bd-callout-success .title { color: #29775F }
+.bd-callout-default{ background: linear-gradient(135deg, #F0F2FF 0%, #E6EAFA 100%); border-left: 4px solid #0048CC;  }
+.bd-callout-default .title { color: #0048CC }
+.bd-callbox{
+	display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+.tab4{
+ tab-size: 4;
+}
+/* ==========================================================
+ * Header User Area Style (287px * 91px)
+ * ========================================================== */
+.user-area {
+    width: 287px;
+    height: 91px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* 또는 필요 시 flex-end */
+    box-sizing: border-box;
+}
+
+.pq-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* 아바타와 텍스트 사이 간격 */
+    cursor: pointer;
+}
+
+/* 프로필 아바타 아이콘/이미지 스타일 */
+.user-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.user-avatar-on {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: #2BB867;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.user-avatar-on i {
+    font-size: 28px;
+    color: #ffffff;
+}
+.user-avatar i {
+    font-size: 28px;
+    color: #a0aab4;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 유저 텍스트 정보 스타일 */
+.user-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.25;
+}
+
+.user-info .user-role {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111111;
+}
+
+.user-info .user-name {
+    font-size: 13px;
+    font-weight: 400;
+    color: #666666;
+}
+.list_none{
+	list-style: none;
+}
+
+.ko-text {
+  word-break: keep-all;       /* 한글은 단어 단위로 쪼개기 */
+  overflow-wrap: break-word;  /* 긴 영문·링크는 레이아웃에 맞춰 강제 줄바꿈 */
+}

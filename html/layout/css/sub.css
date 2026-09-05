@@ -1,0 +1,568 @@
+/**
+ * =========================================================
+ * PQ VERSION (v9.1)
+ * FILENAME : /html/layout/css/sub.css
+ * COMPONENT : sub css
+ * =========================================================
+ */
+:root {
+	--bg-top-line:   #E0E0E0;
+	--bg-hero:       #3186EE; /* 히어로 섹션 파란색 100% 배경 */
+	--bg-main:       #FFFFFF;
+	--max-width:     1440px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Pretendard', -apple-system, sans-serif; color: #1e293b; background: var(--bg-main); }
+
+/* 1440px 중앙 정렬 컨테이너 공통 */
+.pq-container-1440 {
+	width: var(--max-width);
+	margin: 0 auto;
+	position: relative;
+}
+
+/* =========================================================
+ * 1. TOP 영역 (1px 라인 100% + Header 1440px)
+ * ========================================================= */
+.pq-top-line-wrap {
+	width: 100%;
+	height: 1px;
+	background-color: var(--bg-top-line);
+}
+
+.pq-header-wrap {
+	width: 100%;
+	background: #ffffff;
+}
+
+.pq-header {
+	height: 91px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 24px;
+}
+
+.pq-header .logo-area img { width: 287px; height: 91px; display: block; }
+
+.pq-header .top-blink { width: 526px; height: 91px; display: block; }
+.pq-search-container {
+    width: 340px;
+    height: 91px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+/* 2. 폼 레벨 너비 지정 */
+.pq-search-form {
+    width: 100%;
+    padding: 0 10px;
+}
+
+/* 3. 검색 박스 래퍼 (CSS로 디자인 구현) */
+.pq-search-box {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 46px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 23px; /* 둥근 캡슐 스타일 */
+    padding: 0 6px 0 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+/* 포커스 및 호버 시 모던한 블루 테두리 효과 */
+.pq-search-box:focus-within,
+.pq-search-box:hover {
+    border-color: #2563eb;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+/* 4. Input 텍스트 상자 */
+.pq-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    font-family: inherit;
+}
+
+.pq-search-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+/* 5. 돋보기 버튼 */
+.pq-search-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: #2563eb;
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.pq-search-btn:hover {
+    background: #1d4ed8;
+    transform: scale(1.05);
+}
+
+.pq-search-btn:active {
+    transform: scale(0.95);
+}
+.pq-header .user-area img { width: 297px; height: 91px; display: block; }
+
+/* =========================================================
+ * 2. GNB 영역 (100% 테두리 + 1440px 메뉴)
+ * ========================================================= */
+.pq-gnb-wrap {
+	width: 100%;
+	background: #ffffff;
+	border-top: 1px solid #f1f5f9;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.pq-gnb {
+	height: 63px;
+	display: flex;
+	align-items: center;
+	justify-content: left;
+	position: relative;
+	padding-left:80px;
+}
+
+.pq-gnb-menu {
+	min-width: 1153px;
+	display: flex;
+	list-style: none;
+	gap: 72px;
+	margin: 0;
+	padding: 0;
+}
+
+.pq-gnb-menu li a {
+	text-decoration: none;
+	font-size: 18px;
+	font-weight: 700;
+	color: #334155;
+	transition: color 0.2s;
+}
+
+.pq-gnb-menu li a:hover,
+.pq-gnb-menu li a.active {
+	color: #1d72f3;
+}
+
+.pq-gnb-lang {
+	position: absolute;
+	right: 80px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	gap:8px;
+}
+
+.btn-lang {
+	padding: 4px 12px;
+	border-radius: 20px;
+	font-size: 13px;
+	font-weight: 700;
+	cursor: pointer;
+	border: none;
+}
+.btn-lang.kor { background: #3b82f6; color: #fff; }
+.btn-lang.eng { background: #e2e8f0; color: #64748b; }
+/* =========================================================
+ * 1. LAYOUT & PIPELINE WRAPPER (1440px / 100%)
+ * ========================================================= */
+
+/* run.php에서 생성되는 2열 레이아웃 메인 컨테이너 */
+.pq-container,
+.pq-sub-container {
+    width: 1440px;
+    margin: 0 auto;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+/* 우측 본문 감싸기 영역 */
+.pq-main,
+.pq-sub-main {
+    width: 1182px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 상단 100% 구분선 (GNB 하단 배경) */
+.pq-sub-line-bg-outer {
+    width: 100%;
+    height: 31px;
+    background-color: #ffffff;
+    overflow: hidden;
+}
+
+.pq-line-bg-img,
+.pq-sub-line-bg img {
+    width: 100%;
+    height: 31px;
+    display: block;
+    object-fit: cover;
+}
+
+/* =========================================================
+ * 2. LNB (좌측 사이드바 - 너비 258px)
+ * ========================================================= */
+.pq-sub-aside {
+    width: 258px;
+    flex-shrink: 0;
+}
+
+/* 타이틀 이미지 */
+.pq-sub-title-img img {
+    width: 258px;
+    height: 71px;
+    display: block;
+}
+
+/* 서브 메뉴 세로 리스트 (258px * 65px) */
+.pq-sub-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+.pq-sub-menu li a {
+    display: flex;
+    align-items: center;
+    width: 210px;
+    height: 48px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #11192C;
+    text-decoration: none;
+    border-bottom: 1px solid #E3EAEF;
+    box-sizing: border-box;
+    transition: color 0.15s ease;
+    padding-left: 2px;
+    padding-right: 32px;
+
+}
+
+.pq-sub-menu li a:hover,
+.pq-sub-menu li a.active {
+    color: #1d72f3;
+}
+.pq-sub-menu .pq-sub-depth2 {
+    padding-left: 0px;
+    background-color: #fff;
+}
+.pq-sub-menu .pq-sub-depth2 li a {
+    font-size: 14px;
+    padding: 6px 10px;
+    color: #666;
+}
+.pq-sub-menu .pq-sub-depth2 li a.active {
+    color: #0088cc;
+    font-weight: bold;
+}
+/* 하단 다운로드 버튼 (258px * 226px) */
+.pq-sub-btn-download {
+    margin-top: 10px;
+}
+
+.pq-sub-btn-download img {
+    width: 258px;
+    height: 226px;
+    display: block;
+}
+
+/* =========================================================
+ * 3. MAIN CONTENT BOX (슬라이스 액자 박스 구조)
+ * ========================================================= */
+.pq-sub-box {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 상단 액자 라인 (1182px * 32px) */
+.pq-sbox-top img {
+    width: 1182px;
+    height: 32px;
+    display: block;
+}
+
+/* 중앙 액자 라인 (좌/우 테두리 + 실컨텐츠) */
+.pq-sbox-middle {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+/* 🚀 테두리 이미지들의 강제 min-height(600px)를 고정 높이 제거(auto)로 변경 */
+.pq-sbox-left img  { width: 24px; height: 100%; display: block;background-image : url('/path/html/layout/img/sub/s_box_l.jpg');background-repeat: repeat-y }
+.pq-sbox-right img { width: 24px; height: 100%; display: block;background-image : url('/path/html/layout/img/sub/s_box_r.jpg');background-repeat: repeat-y}
+.pq-sbox-r2 img    { width: 54px; height: 100%; display: block; background-image : url('/path//html/layout/img/sub/s_box_r2.jpg');background-repeat: repeat-y}
+
+/* 🚀 본문 컨텐츠 최소 높이 고정 해제 */
+.pq-sub-content {
+    width: 1080px;
+    min-height: auto !important; /* 600px 강제 지정 해제 */
+    padding: 0px;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    position: relative;
+}
+
+/* 본문 헤더 (타이틀 + 캐릭터) */
+.pq-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+}
+
+.pq-content-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.pq-char-img {
+    width: 200px;
+    height: auto;
+}
+
+/* 본문 텍스트 영역 */
+.pq-content-body h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+.pq-content-body p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #475569;
+}
+
+/* 하단 액자 라인 (1128px * 32px) */
+.pq-sbox-bottom img {
+    width: 1128px;
+    height: 32px;
+    display: block;
+}
+
+/* 하단 1px 라인 + 푸터 100% */
+.pq-footer-wrap {
+	width: 100%;
+	background-color: #ffffff;
+	border-top: 1px solid var(--bg-top-line); /* Bottom 1px Line 100% */
+}
+
+.pq-footer-content {
+	height: 105px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+/* LNB 타이틀 박스 전체 감싸기 */
+.pq-ltbox {
+    width: 258px;
+    margin: 0 auto;
+    font-size: 0; /* 이미지 간 미세 공백 제거 */
+}
+
+/* 상단/하단 이미지 Block 처리 */
+.pq-ltbox-top img,
+.pq-ltbox-bottom img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* 중앙 바디 (Flex로 좌/중/우 나란히 배치) */
+.pq-ltbox-body {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 48px;
+    background-color: #2F80ED; /* 이미지 내부 바탕색과 통일 */
+}
+
+/* 좌/우 이미지 크기 고정 */
+.pq-ltbox-left {
+    width: 45px;
+    height: 48px;
+    flex-shrink: 0;
+}
+.pq-ltbox-right {
+    width: 32px;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.pq-ltbox-left img,
+.pq-ltbox-right img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* 중앙 텍스트 영역 (남은 공간 자동 채움 + 텍스트 정렬) */
+.pq-ltbox-center {
+    flex: 1;
+    height: 48px;
+    line-height: 48px;
+    text-align: center;
+    color: #ffffff;             /* 글자색 (필요 시 밝은 민트/흰색 조정) */
+    font-size: 1.5rem;          /* 텍스트 크기 */
+    font-weight: 800;           /* 볼드체 */
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.pq-footer-img img { width: 1440px; height: 105px; display: block; }
+.pq-gap-32 { width: 100%; height: 32px; background-color: var(--bg-main); }
+.pq-gap-69 { width: 100%; height: 69px; background-color: var(--bg-main); }
+.pq-gap-96 { width: 100%; height: 96px; background-color: var(--bg-main); }
+.pq-gap-114 { width: 100%; height: 114px; background-color: var(--bg-main); }
+
+
+/* =========================================================
+ * 4. weather-card
+ * ========================================================= */
+
+.weather-card{
+    background:#fff;
+    border-radius:16px;
+    padding:12px;
+    box-shadow:0 2px 12px rgba(0,0,0,.06);
+}
+
+.weather-top{
+    background:#eef4fb;
+    border-radius:12px;
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.weather-top2{
+    background:#E4E4E4;
+    border-radius:12px;
+    padding:16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.city{
+    font-size:28px;
+    font-weight:500;
+    color:#2b3a55;
+}
+.city2{
+    font-size:24px;
+    font-weight:500;
+    color:#1d1d1d;
+}
+.date{
+    color:#8a94a6;
+    font-size:18px;
+}
+
+.weather-bottom{
+    display:flex;
+    align-items:center;
+    gap:24px;
+    padding:26px 18px 12px;
+}
+
+.weather-icon{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:#f2f6fb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    color:#2f80ed;
+	padding-left:2px
+}
+/* 페이지 헤더 영역 */
+.pq-page-header { margin-bottom: 30px; }
+.pq-breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color:#556A95; margin-bottom: 10px;
+}
+.pq-title-area { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.pq-main-title { font-size: 40px; font-weight: 700; color: #1A55E3; margin: 0; letter-spacing: -0.5px; }
+.pq-status-tag { background: #E7F1FF; color: #3B71F3; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+
+/* 컨텐츠 카드 및 코드 박스 */
+.pq-content-card { background: #ffffff; border: 1px solid #E4E9F0; border-radius: 12px; padding: 30px; margin-top: 20px; }
+.pq-code-box {
+    background: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 20px;
+    font-family: 'D2Coding', 'Consolas', 'Monaco', monospace;
+    font-size: 14px; line-height: 1.6; color: #333;
+}
+
+/* 섹션 타이틀 및 배지 */
+.pq-section-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; margin-bottom: 15px; }
+.pq-badge { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; font-weight: bold; }
+
+/* 포인트 컬러 */
+.bg-blue { background-color: #3B71F3; } .bg-green { background-color: #28A745; }
+.bg-dark { background-color: #343A40; } .bg-orange { background-color: #FF9800; }
+.bg-red { background-color: #DC3545; }
+.bg-purple { background-color: #7507F6; }
+
+pre, 
+pre pq, 
+.pq-code-block pre, 
+.pq-code-block pq {
+    font-family: 'D2Coding', 'Consolas', 'Fira Code', 'Monaco', monospace !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    letter-spacing: 0px !important;
+}
+
+/* <pq> 태그 블록 및 여백 정돈 */
+pre pq { 
+    display: block; 
+    margin-top: 0 !important; 
+    margin-bottom: 0 !important; 
+}
+
+.pq-code-block pre { 
+    padding: 10px 8px !important; 
+    overflow: auto; 
+    margin-bottom: 0 !important; 
+}
+
+
+.pq-top-navigation-bar{
+	min-height:60px;
+	background:#212438;
+}

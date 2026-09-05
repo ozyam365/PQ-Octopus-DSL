@@ -1,0 +1,129 @@
+<?php
+/**
+ * PQ base.css (v1.2.4)
+ * FILENAME : /html/layout/css/base.css
+ */
+?>
+/* 1. 기본 초기화 및 레이아웃 */
+* { box-sizing: border-box; }
+body, html { margin: 0; padding: 0; background: #F8F9FB; font-family: 'Pretendard', -apple-system, sans-serif; }
+
+/* 2. 사이드바 고정 */
+.pq-sidebar {
+    position: fixed;
+    top: 50px; left: 0; bottom: 0;
+    width: 260px;
+    background: #ffffff !important;
+    border-right: 1px solid #E4E9F0;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+/* 3. 로고 및 버전 영역 */
+.pq-logo-img-blue { width: auto; max-width: 100%; height: auto; }
+.pq-logo-img { width: auto; max-width: 100%; height: auto; }
+.pq-sidebar-top {text-align: center; padding:0px 0 0 0 }
+.pq-version-badge {
+    display: inline-block;
+    background: #F1F3F5; color: #72808D;
+    padding: 5px 15px; border-radius: 20px;
+    font-size: 11px; margin-top: 15px;
+    min-width: 185px;
+}
+
+/* 4. 대시보드 (파란색 상단 메뉴) */
+.nav-dashboard {
+    display: flex; align-items: center;
+    background: #EFEFEF !important;
+    color: #222222 !important;
+    width: 100%; height: 50px;
+    padding-left: 60px;
+    text-decoration: none !important;
+    margin: 10px 0;
+}
+
+/* 5. 대분류 타이틀 */
+.nav-category-static {
+    padding: 20px 25px 5px 25px;
+    font-size: 14px; font-weight: bold;
+    color: #474858;
+}
+
+/* 6. 함수 그룹 타이틀 */
+.nav-sub-group {
+    padding: 10px 25px;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; color: #474858; font-size: 13px;
+}
+
+/* 화살표 회전 애니메이션 */
+.chevron-icon { font-size: 10px; color: #ADB5BD; transition: transform 0.3s; }
+.nav-sub-group[aria-expanded="true"] .chevron-icon { transform: rotate(180deg); color: #3B71F3; }
+
+/* 7. 수직 라인 및 서브메뉴 */
+.sub-menu {
+    list-style: none !important;
+    padding-left: 15px !important;
+    margin-left: 32px !important; /* 수직선 위치 안쪽 밀어넣기 고정 */
+    border-left: 1px solid #E4E9F0 !important;
+    margin-top: 5px; margin-bottom: 15px;
+}
+.sub-title { font-size: 12px; font-weight: bold; color: #1982A4; }
+
+/* 8. 함수 링크 및 노란 점 */
+.nav-link-pq {
+    display: flex; align-items: center; padding: 6px 0;
+    color: #8B95A1; text-decoration: none; font-size: 13px; line-height: 1.5;
+}
+.nav-link-pq.active { color: #3B71F3 !important; font-weight: 600; }
+.pq-dot { 
+    width: 6px; height: 6px; 
+    background: #FBBE28; border-radius: 50%; 
+    margin-left: 8px; 
+}
+
+/* 9. 메인 본문 */
+.pq-main {  margin-top:80px;margin-left: 260px; padding: 20px 40px; min-height: 100vh; background: #F8F9FB; }
+
+/* 페이지 헤더 영역 */
+.pq-page-header { margin-bottom: 30px; }
+.pq-breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color:#556A95; margin-bottom: 10px;
+}
+.pq-title-area { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.pq-main-title { font-size: 40px; font-weight: 700; color: #1A55E3; margin: 0; letter-spacing: -0.5px; }
+.pq-status-tag { background: #E7F1FF; color: #3B71F3; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+
+/* 컨텐츠 카드 및 코드 박스 */
+.pq-content-card { background: #ffffff; border: 1px solid #E4E9F0; border-radius: 12px; padding: 30px; margin-top: 20px; }
+.pq-code-box {
+    background: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 8px; padding: 20px;
+    font-family: 'D2Coding', 'Consolas', 'Monaco', monospace;
+    font-size: 14px; line-height: 1.6; color: #333;
+}
+
+/* 섹션 타이틀 및 배지 */
+.pq-section-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; margin-bottom: 15px; }
+.pq-badge { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; font-weight: bold; }
+
+/* 포인트 컬러 */
+.bg-blue { background-color: #3B71F3; } .bg-green { background-color: #28A745; }
+.bg-dark { background-color: #343A40; } .bg-orange { background-color: #FF9800; }
+.bg-red { background-color: #DC3545; }
+.bg-purple { background-color: #7507F6; }
+/* 코드 블록 정밀 제어 (들여쓰기 및 여백) */
+pre, .pq-code-block {
+    tab-size: 2 !important;
+    -moz-tab-size: 2 !important;
+    text-align: left !important;
+    text-indent: 0 !important;
+}
+.pq-code-block pre { padding:10px 35px !important; overflow: hidden; margin-bottom: -10px !important; }
+pre pq { display: block; margin-top: -35px !important; margin-bottom: -5px !important; }
+
+
+.pq-top-navigation-bar{
+	min-height:60px;
+	background:#212438;
+}
