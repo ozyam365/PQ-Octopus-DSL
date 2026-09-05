@@ -1,9 +1,10 @@
-
 # PQ Octopus DSL
 
 **PQ Octopus DSL** is a lightweight PHP-based DSL designed to make web development simpler, more concise, and more practical.
 
 PQ combines familiar PHP concepts with concise syntax, chaining, utility functions, and web-oriented features to reduce repetitive code and make application development easier to read and maintain.
+
+<img width="1024" height="1536" alt="ChatGPT Image 2026년 7월 22일 오후 10_52_51" src="https://github.com/user-attachments/assets/0a2db57a-f3fd-426e-9189-85c395f87e42" />
 
 > **Status:** Beta / Active Development
 
