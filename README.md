@@ -7,6 +7,8 @@ PQ combines familiar PHP concepts with concise syntax, chaining, utility functio
 
 > **Status:** Beta / Active Development
 
+📦 [Download Full Installation Package (Google Drive)] [https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO](https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO)
+
 ## Why PQ?
 
 PHP is powerful and flexible, but web development often requires a large amount of repetitive syntax.
