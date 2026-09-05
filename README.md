@@ -78,3 +78,86 @@ PQ-Octopus-DSL/
 > `@` = Variable  
 > `#` = Object  
 > `$` = Array / Collection
+
+
+## Sample Code
+
+The following example shows a real-world PQ application flow for a bulletin board
+write/edit page.
+
+
+```pq
+[[
+	@code = form.get("code").string();
+	@idx  = form.get("idx").int();
+	@page = form.get("page").trim().val(1).int();
+	@act  = form.get("act").val("i").string();
+
+	if(empty(@code)) :
+		http.msg("Invalid command.").back();
+		exit;
+	endif;
+
+	// Load board configuration
+	#cfg = db.@_bbs_adm_t.where("code = '@code'").row();
+
+	if(!#cfg) :
+		http.msg("Failed to load board configuration.").back();
+		exit;
+	endif;
+
+	// Initialize variables
+	pin(@subject, @note, @author_name, @author_email, @author_pwd).val("");
+	pin(@u_notice, @u_secret, @u_show, @gidx, @gseq, @gstep).val(0);
+
+	// Authentication
+	if(auth.check()) :
+		#user = session.get("user");
+
+		if(auth.admin()) :
+			// Administrator
+			@btn_update_show = true;
+		else :
+			// Member permission check
+			if(!rgx(#cfg.gwrite_mbr).csv(#user.mbr_level).match()) :
+				http.msg("You do not have permission.").back();
+				exit;
+			endif;
+		endif;
+	else :
+		// Guest handling
+		if(#cfg.gwrite_guest == 1) :
+			@btn_insert_show = true;
+		else :
+			http.msg("You do not have permission.").back();
+			exit;
+		endif;
+	endif;
+
+	// Select skin
+	@skin_dir = "base";
+
+	switch((int)#cfg.bbs_type) :
+		case 1: @skin_dir = "base"; break;
+		case 2: @skin_dir = "faq"; break;
+		case 3: @skin_dir = "gallery"; break;
+		case 4: @skin_dir = "qna"; break;
+	endswitch;
+
+	inc "/path/html/bbs/skin/@skin_dir/bbs.pq";
+]]
+
+What this example demonstrates
+@ variables
+# objects
+$ collections
+Method chaining
+Database queries
+Form handling
+Authentication and sessions
+Conditional statements
+switch / case
+pin() variable initialization
+Regular-expression utilities
+Dynamic file inclusion
+PHP interoperability
