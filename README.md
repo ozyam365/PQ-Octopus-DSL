@@ -10,6 +10,8 @@ PQ combines familiar PHP concepts with concise syntax, chaining, utility functio
 
 📦 **[Download Full Installation Package (Google Drive)]([[PQ-Octopus-DSL download](https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO)]**
 
+http://pqoctopus.com
+
 ## Why PQ?
 Why doesn't PHP have a DSL like this?
 
