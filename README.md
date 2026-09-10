@@ -203,3 +203,146 @@ pin() variable initialization
 Regular-expression utilities
 Dynamic file inclusion
 PHP interoperability
+
+### Automatic Login (Cookie + AES Encryption + HMAC Signature Verification) and Session Assignment
+
+**One-line Code Summary:**
+"Practical example of automatic login processing using cookies, AES encryption, HMAC signature verification, and session assignment."
+
+**Key PQ Syntax Highlights:**
+
+* **Intuitive Variable Scopes:** Distinguishes `@` variables from `#` object/resource variables, improving code readability and making data flow easier to understand.
+* **Method Chaining:** Simplifies complex PHP function calls through chaining, such as `text().encrypt()` and `text().decrypt()`.
+* **Concise Database Integration:** Makes database access more intuitive with expressions such as `db.@_adm_t.where().row()`.
+
+```pq
+/**
+ * =========================================================
+ * PQ VERSION (BETA VERSION 9.1.6)
+ * FILENAME : login.pq
+ * =========================================================
+ */
+
+// This value must be retrieved from the private server configuration.
+@urlTag = APP_SECRET;
+
+// Bypass the login process if the user is already authenticated.
+if(auth.check()):
+
+    http.go('/adm/00/main');
+    exit;
+
+else:
+
+    // Check whether the automatic login cookie exists.
+    if(cookie.has('auto_login')):
+
+        // Verify the automatic login cookies.
+        if(cookie.has('log_idkey') && cookie.has('log_idseq')):
+
+            // AES decryption
+            @gate_key = text(cookie.get('log_idkey')).decrypt(@urlTag);
+
+            if(@gate_key):
+
+                // HMAC signature verification
+                @server_sign = hash_hmac('sha256', @gate_key, @urlTag);
+
+                if(hash_equals(@server_sign, cookie.get('log_idseq'))):
+
+                    #mbr_rs = db.@_adm_t
+                        .where("mbr_id = '@gate_key' AND state = '2'")
+                        .row();
+
+                    if(#mbr_rs):
+
+                        #user_packet = [
+                            'mbr_id'    => #mbr_rs.mbr_id,
+                            'idx'       => #mbr_rs.idx,
+                            'mbr_level' => #mbr_rs.mbr_level,
+                            'mbr_name'  => #mbr_rs.mbr_name,
+                            'mbr_nick'  => #mbr_rs.mbr_nick,
+                            'mbr_email' => #mbr_rs.mbr_email,
+                            'mbr_hp'    => #mbr_rs.mbr_hp
+                        ];
+
+                        session.login(#user_packet);
+
+                        #user = session.get("user");
+                        @login_id = #user.mbr_id;
+
+                        @idkey = text(@login_id).encrypt(@urlTag);
+                        @sign = hash_hmac('sha256', @login_id, @urlTag);
+
+                        cookie.set('log_idkey', @idkey, 86400);
+                        cookie.set('log_idseq', @sign, 86400);
+
+                        @prevPage = http.referer();
+
+                        if(@prevPage):
+                            http.go(@prevPage);
+                        else:
+                            http.go('/adm/00/main');
+                        endif;
+
+                    endif;
+
+                endif;
+
+            endif;
+
+        endif;
+
+    else:
+
+        // Remove invalid automatic login cookies.
+        cookie.delete('auto_login');
+        cookie.delete('log_idkey');
+        cookie.delete('log_idseq');
+
+    endif;
+
+endif;
+```
+
+```html
+<form action="/admin/login_ext" method="POST">
+
+    <input
+        class="form-control form-control-lg pq-input-shield"
+        type="text"
+        id="mbr_id"
+        name="mbr_id"
+        placeholder="Enter your ID"
+        required
+        aria-required="true"
+        autocomplete="off"
+    >
+
+    <input
+        class="form-control form-control-lg pq-input-shield"
+        type="password"
+        id="mbr_pwd"
+        name="mbr_pwd"
+        placeholder="Enter your password"
+        required
+        aria-required="true"
+    />
+
+    <label
+        class="form-check-label text-white-50 pointer ms-2"
+        for="auto_login"
+    >
+        Remember me
+    </label>
+
+    <button
+        type="submit"
+        class="btn btn-warning btn-lg w-100 fw-bold py-2 shadow-sm"
+    >
+        Request System Authorization
+    </button>
+
+</form>
+```
+
