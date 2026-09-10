@@ -204,145 +204,314 @@ Regular-expression utilities
 Dynamic file inclusion
 PHP interoperability
 
-### Automatic Login (Cookie + AES Encryption + HMAC Signature Verification) and Session Assignment
-
-**One-line Code Summary:**
-"Practical example of automatic login processing using cookies, AES encryption, HMAC signature verification, and session assignment."
-
-**Key PQ Syntax Highlights:**
-
-* **Intuitive Variable Scopes:** Distinguishes `@` variables from `#` object/resource variables, improving code readability and making data flow easier to understand.
-* **Method Chaining:** Simplifies complex PHP function calls through chaining, such as `text().encrypt()` and `text().decrypt()`.
-* **Concise Database Integration:** Makes database access more intuitive with expressions such as `db.@_adm_t.where().row()`.
-
-```pq
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.6)
- * FILENAME : login.pq
+ * PQ VERSION (BETA VERSION 9.1.2)
+ * FILENAME  : /html/bbs/bbs_ext.pq
+ * COMPONENT : Positive Reverse gidx Acceleration Algorithm
  * =========================================================
  */
-
-// This value must be retrieved from the private server configuration.
-@urlTag = APP_SECRET;
-
-// Bypass the login process if the user is already authenticated.
-if(auth.check()):
-
-    http.go('/adm/00/main');
-    exit;
-
-else:
-
-    // Check whether the automatic login cookie exists.
-    if(cookie.has('auto_login')):
-
-        // Verify the automatic login cookies.
-        if(cookie.has('log_idkey') && cookie.has('log_idseq')):
-
-            // AES decryption
-            @gate_key = text(cookie.get('log_idkey')).decrypt(@urlTag);
-
-            if(@gate_key):
-
-                // HMAC signature verification
-                @server_sign = hash_hmac('sha256', @gate_key, @urlTag);
-
-                if(hash_equals(@server_sign, cookie.get('log_idseq'))):
-
-                    #mbr_rs = db.@_adm_t
-                        .where("mbr_id = '@gate_key' AND state = '2'")
-                        .row();
-
-                    if(#mbr_rs):
-
-                        #user_packet = [
-                            'mbr_id'    => #mbr_rs.mbr_id,
-                            'idx'       => #mbr_rs.idx,
-                            'mbr_level' => #mbr_rs.mbr_level,
-                            'mbr_name'  => #mbr_rs.mbr_name,
-                            'mbr_nick'  => #mbr_rs.mbr_nick,
-                            'mbr_email' => #mbr_rs.mbr_email,
-                            'mbr_hp'    => #mbr_rs.mbr_hp
-                        ];
-
-                        session.login(#user_packet);
-
-                        #user = session.get("user");
-                        @login_id = #user.mbr_id;
-
-                        @idkey = text(@login_id).encrypt(@urlTag);
-                        @sign = hash_hmac('sha256', @login_id, @urlTag);
-
-                        cookie.set('log_idkey', @idkey, 86400);
-                        cookie.set('log_idseq', @sign, 86400);
-
-                        @prevPage = http.referer();
-
-                        if(@prevPage):
-                            http.go(@prevPage);
-                        else:
-                            http.go('/adm/00/main');
-                        endif;
-
-                    endif;
-
-                endif;
-
-            endif;
-
-        endif;
-
-    else:
-
-        // Remove invalid automatic login cookies.
-        cookie.delete('auto_login');
-        cookie.delete('log_idkey');
-        cookie.delete('log_idseq');
-
+[[
+    // 1. Sanitize & Validate Required Parameters
+    @code = form.get('code').special().trim().error("Board code is required.");
+    @act  = form.get('act').error("Invalid access method.");
+    @now_year = form.get('now_year').special();
+    
+    if (empty(@now_year)) : @now_year = @_year; endif;
+    if (empty(@code) || empty(@act)) : 
+        http.msg("Required code is missing.").back(); exit; 
     endif;
 
-endif;
-```
+    // 2. Fetch Board Configuration from Dynamic Table
+    @bbsCode_t = @_bbs_t . "_" . @code;
+    #cfg = db.@_bbs_adm_t.where("code = '@code'").row();
+    if (!#cfg) : 
+        http.msg("Board configuration not found.").back(); exit; 
+    endif;
 
-```html
-<form action="/admin/login_ext" method="POST">
+    // 3. File Upload Path & Security Policy Setup
+    @upd_bbs_dir  = "bbs/" . @code . "/" . @now_year;
+    @upd_full_dir = ATTACH_DIR . @upd_bbs_dir;
+    @attach_max   = val(#cfg.attach_max, 0);
+    @allow_ext    = val(#cfg.attach_ext, "jpg,jpeg,png,gif,webp,zip,pdf,txt");
 
-    <input
-        class="form-control form-control-lg pq-input-shield"
-        type="text"
-        id="mbr_id"
-        name="mbr_id"
-        placeholder="Enter your ID"
-        required
-        aria-required="true"
-        autocomplete="off"
-    >
+    if (file.has(@upd_full_dir)) : 
+        file.mkdir(@upd_full_dir, 0777); 
+    endif;
 
-    <input
-        class="form-control form-control-lg pq-input-shield"
-        type="password"
-        id="mbr_pwd"
-        name="mbr_pwd"
-        placeholder="Enter your password"
-        required
-        aria-required="true"
-    />
+    // 4. Handle Master File Uploads & Thumbnail Generation
+    if (@attach_max > 0 && (@act == "i" || @act == "u")) :
+        if (isset($_FILES['attach_files_master'])) :
+            @total_files = count($_FILES['attach_files_master']['name']);
+            repeat(@i < @total_files).set(@i=0).step(1):
+                if ($_FILES['attach_files_master']['error'][@i] === UPLOAD_ERR_NO_FILE) continue;
 
-    <label
-        class="form-check-label text-white-50 pointer ms-2"
-        for="auto_login"
-    >
-        Remember me
-    </label>
+                $_FILES['now_upload'] = [
+                    'name'     => $_FILES['attach_files_master']['name'][@i],
+                    'type'     => $_FILES['attach_files_master']['type'][@i],
+                    'tmp_name' => $_FILES['attach_files_master']['tmp_name'][@i],
+                    'error'    => $_FILES['attach_files_master']['error'][@i],
+                    'size'     => $_FILES['attach_files_master']['size'][@i]
+                ];
 
-    <button
-        type="submit"
-        class="btn btn-warning btn-lg w-100 fw-bold py-2 shadow-sm"
-    >
-        Request System Authorization
-    </button>
+                @saved_name = file.upload('now_upload')->path(@upd_full_dir)->random()->allow(@allow_ext)->image()->save();
+                @ori_name   = $_FILES['attach_files_master']['name'][@i];
 
-</form>
-```
+                if (@saved_name) :
+                    $ori_box[]  = @upd_bbs_dir . "/" . @ori_name;
+                    $file_info  = ["ori" => @ori_name, "path" => @upd_bbs_dir . "/" . @saved_name];
+                    $file_box[] = @file_info;
 
+                    file.thumbnail(@upd_full_dir . "/" . @saved_name, @upd_full_dir . "/t_" . @saved_name, 200, 200, true);
+                else:
+                    http.msg("File upload failed security validation or storage error occurred.").back(); exit;
+                endif;
+            endrepeat;
+            unset($_FILES['now_upload']);
+        endif;
+    endif;
+
+    // 5. Anti-Bot CSRF One-Time Token Verification
+    if (@act != "d") :
+        @sess_token = session.get('robot_token');
+        @form_token = form.get('robot_token').trim();
+
+        // Immediately revoke token to prevent replay attacks
+        session.unset('robot_token');
+
+        if (empty(@sess_token) || @sess_token !== @form_token) :
+            http.msg("Automated robot attempt detected or form request has expired.").back();
+            exit;
+        endif;
+    endif;
+
+    // 6. Action-Based Processing Pipeline (CRUD Router)
+    switch (@act) {
+        case "i": // [CREATE] Insert New Article
+            @form_note    = form.get('note');
+            @author_email = form.get('author_email').trim();
+            @author_name  = form.get('author_name').trim();
+            @author_pwd   = form.get('author_pwd').trim();
+            @form_subject = form.get('subject').trim();
+
+            $record = [];
+            $record['code']    = @code;
+            $record['subject'] = html(@form_subject).trim().special("on").run();
+
+            // XSS Filtering & Editor Policy Handler
+            if (#cfg.u_editor == 1) :
+                @note = html(@form_note).youtube("on").xss("on").run();
+            else:
+                @note = html(@form_note).xss("on").run();
+            endif;
+
+            $record['note']         = @note;
+            $record['author_email'] = @author_email;
+
+            // Process AJAX Attachments JSON Payload
+            $ajax_files_raw = form.get('ajax_attached_files').value();
+            $ajax_files_arr = !empty($ajax_files_raw) ? json_decode($ajax_files_raw, true) : [];
+
+            if (!empty($ajax_files_arr) && is_array($ajax_files_arr)) :
+                $ori_box = [];
+                repeat($ajax_files_arr).as($af) :
+                    $ori_box[] = "bbs/" . @code . "/" . @now_year . "/" . $af['ori'];
+                endrepeat;
+                $record['attach_files'] = json_encode($ajax_files_arr, JSON_UNESCAPED_UNICODE);
+                $record['origin_files'] = json_encode($ori_box, JSON_UNESCAPED_UNICODE);
+            else:
+                $record['attach_files'] = null;
+                $record['origin_files'] = null;
+            endif;
+
+            @form_notice = form.get("u_notice").val(2).int();
+            @form_show   = form.get("u_show").val(2).int();
+            @form_secret = form.get("u_secret").val(2).int();
+
+            // Permission Check for Admin Controls
+            if (adm_auth()):
+                $record["u_notice"] = (@form_notice == 1) ? 1 : 2;
+                $record["u_show"]   = (@form_show == 1) ? 1 : 2;
+                $record["u_secret"] = (@form_secret == 1) ? 1 : 2;
+            else:
+                $record["u_notice"] = 2;
+                $record["u_show"]   = 2;
+                $record["u_secret"] = (@form_secret == 1) ? 1 : 2;
+            endif;
+
+            $record['reg_date'] = date('Y-m-d H:i:s');
+            $record['ip']       = http.ip();
+
+            // Member / Guest Author Session Normalization
+            if (auth.check()) :
+                #user = session.get('user');
+                $record['author_id'] = #user.mbr_id;
+                if (empty(@author_name)) $record['author_name'] = #user.mbr_name;
+                if (empty(@author_pwd))  $record['author_pwd']  = '';
+            else:
+                $record['author_name'] = form.get('author_name').trim();
+                $record['author_pwd']  = form.get('author_pwd').trim();
+            endif;
+
+            // Positive Reverse Index Acceleration Calculation
+            @gq_cnt = db.count("SELECT COUNT(*) FROM @bbsCode_t");
+            if (@gq_cnt > 0) :
+                @gidx_min = db.@bbsCode_t.min("gidx");
+                @gidx_val = @gidx_min - 1;
+            else:
+                @gidx_val = -1;
+            endif;
+
+            $record['gidx']  = @gidx_val;
+            $record['gseq']  = 0;
+            $record['gstep'] = 0;
+
+            db.@bbsCode_t.insert($record);
+            http.msg("Article successfully published.").go("/bbs/bbs_list?code=@code");
+            break;
+
+        case "u": // [UPDATE] Modify Article
+            @idx = form.get("idx").val(0).int();
+            if (empty(@idx)) : http.msg("Article not found.").back(); exit; endif;
+
+            @form_note    = form.get('note').value();
+            @form_notice  = form.get("u_notice").val(2).int();
+            @form_show    = form.get("u_show").val(2).int();
+            @form_secret  = form.get("u_secret").val(2).int();
+            @form_subject = form.get('subject').special("on").trim().value();
+
+            $record = [];
+            $record['subject'] = html(@form_subject).xss("on").run();
+
+            if (#cfg.u_editor == 1) :
+                @note = html(@form_note).youtube("on").xss("on").run();
+            else:
+                @note = html(@form_note).xss("on").run();
+            endif;
+
+            $record['note'] = @note;
+            if (adm_auth()):
+                $record["u_notice"] = (@form_notice == 1) ? 1 : 2;
+                $record["u_show"]   = (@form_show == 1) ? 1 : 2;
+            endif;
+            $record["u_secret"] = (@form_secret == 1) ? 1 : 2;
+
+            $ajax_files_raw = form.get('ajax_attached_files').value();
+            $ajax_files_arr = !empty($ajax_files_raw) ? json_decode($ajax_files_raw, true) : [];
+
+            // Garbage Collection for Removed Attachments (Physical File Cleanup)
+            $old_row   = db.query("SELECT attach_files FROM `" . @bbsCode_t . "` WHERE idx = '@idx'").array();
+            $old_files = ($old_row && $old_row['attach_files']) ? json_decode($old_row['attach_files'], true) : [];
+
+            if (is_array($old_files)) :
+                repeat($old_files).as($old_f) :
+                    @is_alive = false;
+                    repeat($ajax_files_arr).as($new_f) :
+                        if ($old_f['path'] == $new_f['path']) : @is_alive = true; break; endif;
+                    endrepeat;
+
+                    // Unlinked File Detection & Deletion
+                    if (!@is_alive) :
+                        @target_file_path = ATTACH_DIR . $old_f['path'];
+                        if (file.has(@target_file_path)) file.delete(@target_file_path);
+
+                        @dir   = dirname(@target_file_path);
+                        @name  = basename(@target_file_path);
+                        @thumb = @dir . "/t_" . @name;
+                        if (file.has(@thumb)) file.delete(@thumb);
+                    endif;
+                endrepeat;
+            endif;
+
+            if (!empty($ajax_files_arr) && is_array($ajax_files_arr)) :
+                $ori_box = [];
+                repeat($ajax_files_arr).as($af) :
+                    $ori_box[] = "bbs/" . @code . "/" . @now_year . "/" . $af['ori'];
+                endrepeat;
+                $record['attach_files'] = json_encode($ajax_files_arr, JSON_UNESCAPED_UNICODE);
+                $record['origin_files'] = json_encode($ori_box, JSON_UNESCAPED_UNICODE);
+            else:
+                $record['attach_files'] = null;
+                $record['origin_files'] = null;
+            endif;
+
+            db.@bbsCode_t.where("idx = '@idx'").update($record);
+            http.msg("Article successfully updated.").go("/bbs/bbs_view?code=@code&idx=@idx");
+            break;
+
+        case "d": // [DELETE] Remove Article & Related Data
+            @idx = form.get("idx").val(0).int();
+            if (empty(@idx)) : http.msg("Article not found.").back(); exit; endif;
+
+            @delete_auth = false;
+            #user = session.get("user");
+            @bbsCode_t     = "pq_bbs_data_" . @code;
+            @bbsMemoCode_t = @_bbs_memo_t . "_" . @code;
+
+            $row = db.@bbsCode_t.where("idx = '@idx'").row().array();
+
+            // Authorization Resolution Flow
+            if (auth.check()) :
+                if (auth.admin()) :
+                    @delete_auth = true;
+                else:
+                    if (#user.mbr_id == $row['author_id']) :
+                        @delete_auth = true;
+                    endif;
+                endif;
+            else :
+                // Anonymous Password Auth Session Check
+                #bbs_auth = session.get('bbs_auth_' . @idx);
+                if (!empty(#bbs_auth) && isset(#bbs_auth.idx)) :
+                    if ($row['idx'] == #bbs_auth.idx && $row['code'] == #bbs_auth.code && #bbs_auth.auth == true) :
+                        @delete_auth = true;
+                    else:
+                        @delete_auth = false;
+                    endif;
+                else :
+                    // Redirect to Anonymous Auth Prompt Page
+                    @http_url = http.request_uri();
+                    @ref_url  = val(@ref_url, urlencode(@http_url));
+                    http.go("pass?code=@code&act=v&idx=@idx&page=@page&ref_url=@ref_url");
+                    exit;
+                endif;
+            endif;
+
+            // Execute Cascade Deletion (Physical Files & Comments)
+            if (@delete_auth == true):
+                $drs = db.@bbsCode_t.select("attach_files").where("idx = '@idx'").row().array();
+                if ($drs && !empty($drs['attach_files'])) :
+                    $dfile = json_decode($drs['attach_files'], true);
+                    if (is_array($dfile)) :
+                        repeat($dfile).as($item) :
+                            @target_file_path = ATTACH_DIR . $item['path'];
+                            if (file.has(@target_file_path)) :
+                                file.delete(@target_file_path);
+                            endif;
+
+                            @dir   = dirname(@target_file_path);
+                            @name  = basename(@target_file_path);
+                            @thumb = @dir . "/t_" . @name;
+                            if (file.has(@thumb)) :
+                                file.delete(@thumb);
+                            endif;
+                        endrepeat;
+                    endif;
+                endif;
+
+                db.@bbsCode_t.where("idx = '@idx'").delete();
+
+                // Cleanup Associated Comment Records
+                @cnt = db.@bbsMemoCode_t.where("parent_idx = '@idx'").count();
+                if (@cnt > 0) :
+                    db.@bbsMemoCode_t.where("parent_idx = '@idx'").delete();
+                endif;
+
+                http.msg("Article successfully deleted.").go("/bbs/bbs_list?code=@code");
+            else:
+                http.msg("Failed to delete article. Unauthorized access.").go("/bbs/bbs_list?code=@code");
+            endif;
+            break;
+    }
+    exit;
+]]
