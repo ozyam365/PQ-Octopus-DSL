@@ -206,8 +206,8 @@ PHP interoperability
 
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.2)
- * FILENAME  : /html/bbs/bbs_ext.pq
+ * PQ VERSION (BETA VERSION 9.1.6)
+ * FILENAME  : bbs_ext.pq
  * COMPONENT : Positive Reverse gidx Acceleration Algorithm
  * =========================================================
  */
