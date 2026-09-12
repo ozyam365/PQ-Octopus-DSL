@@ -13,53 +13,261 @@ PQ combines familiar PHP concepts with concise syntax, chaining, utility functio
 http://pqoctopus.com (Under construction)
 
 ## Why PQ?
-Why doesn't PHP have a DSL like this?
+# Why Hasn't PHP Had a DSL Like This?
 
-PHP is powerful, but its syntax tends to be verbose. jQuery solved a similar problem for the DOM, turning manipulation into elegant chains. PQ extends that same chaining philosophy across the entire PHP server-side layer — variables, databases, loops, and form handling.
+PHP is powerful.
 
-PHP is already powerful. But we keep writing the same boilerplate.
+It can handle almost everything needed for web development, and its ecosystem has been proven over decades.
 
-<pre><code>
-*php*
+But when you build real applications with PHP, you eventually notice something interesting:
+
+**PHP has plenty of power, yet we keep writing the same patterns over and over again.**
+
+Take a simple example: getting a page parameter, trimming it, applying a default value, validating it, and converting it to an integer.
+
+In PHP, you might write:
+
+```php
 $page = isset($_GET['page']) ? trim($_GET['page']) : 1;
-if (!is_numeric($page)) { $page = 1; }
+
+if (!is_numeric($page)) {
+    $page = 1;
+}
+
 $page = (int)$page;
-</code></pre>
-Four lines for logic that feels like it should take one. isset(), a ternary, a type check, a cast — you write it the same way every time, and every code review reminds you the pattern never changes.
+```
 
-PQ collapses that repetition into a single chain.
+There is nothing wrong with this code.
 
-<pre><code>
-*pq*
+It is perfectly normal PHP.
+
+But what are we actually trying to say?
+
+> Get `page` → trim it → use `1` if there is no value → convert it to an integer.
+
+Wouldn't it be nice if the code could read that way too?
+
+With PQ:
+
+```pq
 @page = form.get("page").trim().val(1).int();
-</code></pre>
+```
 
-Borrowed from jQuery
+The important part is not simply that the code is shorter.
 
-> $(el).find(".item").addClass("active").show();
+**The data flow is visible directly in the code.**
 
-Think about why that line felt so good to write. Finding, manipulating, and producing a result read as one continuous flow — no intermediate variables, no nested conditionals.
+---
 
-PQ brings that same feeling to the entire backend.
+## Inspired by jQuery
 
-Area	PQ chaining example
-Form handling	form.get("keyword").trim().val("").string();
-Database queries	db.pq_bbs_data.where("idx = '1'").row();
-Return-value casting	#row.array() / .json() / .object()
-Bulk variable init	pin(@a, @b, @c).val(0);
-Less syntax, not less power
+If you've worked with frontend development, you may remember code like this:
 
-PQ doesn't replace PHP. Every .pq file compiles down to PHP and runs as PHP, and you can freely mix in plain PHP syntax whenever you need to.
+```javascript
+$(el).find(".item").addClass("active").show();
+```
 
-Four loop styles (foreach, foreach-key, for, while) unified into one repeat() ~ endrepeat;
-Exception handling via rule ~ .fail() ~ endrule; instead of try/catch
-Dedicated blocks has() and blank() in place of isset() and empty()
-Three symbols — @ (variable), # (object), $ (array) — so you can tell what kind of data you're looking at, at a glance
-The point
+Find the DOM element.
 
-PQ isn't asking you to learn a new language. It's PHP you already know, with the chaining feel of jQuery you already like, layered on top.
+Select what you need.
 
-Cut the verbosity. Compress the repetition. Let the code read the way it flows. That's all PQ is trying to do.
+Add a class.
+
+Show it.
+
+Each operation is independent, yet they form a single readable flow.
+
+That is what made jQuery chaining so pleasant to use.
+
+**The execution flow and the reading flow were almost the same.**
+
+PQ started with a simple question:
+
+> What if we brought that idea to server-side development?
+
+Not just DOM manipulation, but variables, form data, database queries, iteration, validation, and error handling.
+
+That is what PQ is trying to do.
+
+---
+
+## PQ Does Not Replace PHP
+
+PQ is not an attempt to replace PHP.
+
+PHP already does its job extremely well. There is no reason to rebuild everything from scratch.
+
+Instead, PQ is designed to sit on top of PHP and provide a more concise way to express repetitive server-side logic.
+
+`.pq` files are compiled into PHP and executed in the existing PHP environment.
+
+The basic idea is:
+
+```text
+PQ
+ ↓
+Compile to PHP
+ ↓
+Run in the existing PHP environment
+```
+
+You can also mix native PHP with PQ whenever you need to.
+
+So PQ is not about abandoning PHP.
+
+**It is a DSL built around PHP.**
+
+---
+
+## Server-Side Chaining
+
+The core idea of PQ is to connect related operations into a single flow.
+
+For example, form data:
+
+```pq
+form.get("keyword").trim().val("").string();
+```
+
+Database queries:
+
+```pq
+db.pq_bbs_data.where("idx = '1'").row();
+```
+
+Converting query results:
+
+```pq
+#row.array();
+#row.json();
+#row.object();
+```
+
+Initializing multiple variables:
+
+```pq
+pin(@a, @b, @c).val(0);
+```
+
+None of these operations are revolutionary by themselves.
+
+The important part is the **consistency of the syntax and the flow**.
+
+Get the data.
+
+Process it.
+
+Transform it.
+
+Use the result.
+
+The code follows the same direction as the operation itself.
+
+---
+
+## A Consistent Approach to Repetition
+
+Server-side applications also contain a lot of repetitive control flow.
+
+PQ provides a unified syntax for iteration:
+
+```pq
+repeat()
+    ...
+endrepeat;
+```
+
+The same structure can represent different iteration patterns such as `foreach`, key/value iteration, `for`, and `while`.
+
+The goal is not to remove the capabilities of PHP.
+
+The goal is to give common concepts a consistent way to be expressed.
+
+---
+
+## Error Handling
+
+The same philosophy is applied to error handling.
+
+```pq
+rule
+    ...
+.fail()
+    ...
+endrule;
+```
+
+The normal flow and the failure flow are expressed together.
+
+Likewise, common value checks can be expressed through dedicated constructs such as:
+
+```pq
+has(...)
+blank(...)
+```
+
+Rather than repeatedly combining PHP's `isset()`, `empty()`, ternary operators, and other checks.
+
+---
+
+## Make Data Types Visible
+
+PQ also uses three symbols to make the role of data immediately recognizable:
+
+```text
+@  variable
+#  object
+$  array
+```
+
+This is a small design decision, but it helps when reading code.
+
+You don't always have to stop and inspect a variable name to understand what kind of value you are dealing with.
+
+The syntax gives you a hint.
+
+---
+
+# So, What Is PQ Actually Trying to Do?
+
+PQ is not trying to create a language that is more powerful than PHP.
+
+It is not trying to replace PHP.
+
+It started from a much simpler observation:
+
+**PHP is already powerful enough.**
+
+What developers often need is not more power, but less repetition.
+
+jQuery showed how chaining could make frontend operations easier to read.
+
+PQ takes that idea and applies it to server-side logic.
+
+```text
+Get → Process → Transform → Use
+```
+
+The goal is to make that flow visible in the code.
+
+Shorter syntax.
+
+Less repetition.
+
+Clearer data flow.
+
+And code that reads closer to the way we actually think about the operation.
+
+**That is what PQ is trying to do.**
+
+PHP is still there.
+
+The PHP ecosystem is still there.
+
+PQ simply adds another option on top of it:
+
+**a concise, chain-oriented DSL for PHP server-side development.**
+
 
 ## Main Features
 
