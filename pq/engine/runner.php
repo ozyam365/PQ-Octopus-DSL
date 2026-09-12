@@ -92,12 +92,11 @@ function pq_compile_expr($expr) {
         $expr
     );
 
-    $expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1->$2', $expr);
-    $expr = preg_replace('/(?<![\$a-zA-Z0-9_])auth\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'auth()->$1', $expr);
-    $expr = preg_replace('/@([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
-    $expr = preg_replace('~#([a-zA-Z_][a-zA-Z0-9_]*)~', '$\\1', $expr);
-    $expr = preg_replace('/(?<![\$a-zA-Z0-9_])url\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'PQRouter::$1', $expr);
-	$expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', '{$1->$2}', $expr);    
+	$expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1->$2', $expr);
+	$expr = preg_replace('/(?<![\$a-zA-Z0-9_])auth\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'auth()->$1', $expr);
+	$expr = preg_replace('/(?<![\$a-zA-Z0-9_])url\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'PQRouter::$1', $expr);
+	$expr = preg_replace('/@([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
+	$expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
 	
     foreach (PQ_RESERVED_MAP as $r => $bridge) {
         $expr = preg_replace('/(?<![\$a-zA-Z0-9_])' . preg_quote($r, '/') . '\.([a-zA-Z_])/i', $bridge . '$1', $expr);
@@ -765,6 +764,14 @@ function perform_lexing($content) {
                     $i += (strlen($str_m[0]) - 1); continue;
                 }
             }
+			if ($char === '#') {
+                $remain = substr($content, $i);
+                if (preg_match('/^#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', $remain, $m)) {
+                    $output .= '{$' . $m[1] . '->' . $m[2] . '}';
+                    $i += (strlen($m[0]) - 1);
+                    continue;
+                }
+            }			
             if ($char === '@') {
                 $remain = substr($content, $i + 1, 15);
                 if (!preg_match('/^(auth|app|url|db|http|session|form|date|trace)\./i', $remain) && preg_match('/^[a-zA-Z_]/', $remain)) {
