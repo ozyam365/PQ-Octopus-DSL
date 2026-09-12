@@ -12,7 +12,6 @@ PQ combines familiar PHP concepts with concise syntax, chaining, utility functio
 
 http://pqoctopus.com (Under construction)
 
-## Why PQ?
 # Why Hasn't PHP Had a DSL Like This?
 
 PHP is powerful.
