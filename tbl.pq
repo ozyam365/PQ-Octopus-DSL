@@ -1,20 +1,28 @@
 [[
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.6)
- * FILENAME : /tbl.pq
-*  tbl.pq  -  테이블명 변수 저장하는곳
-*  tbl.pq는  테이블 관련 변수를 저장하는곳이고  맨앞에는  전역변수임을  나타내는  _ 를 붙여서 표현합니다.(예시 @_adm...)
-*  테이블명 변수 끝에는 _t 를 붙여 줘서 구분합니다. (예시 @_adm_t )
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /tbl.pq
+ * COMPONENT : Database Table Prefix & Global Table Name Mapping
+*  tbl.pq – Stores table name variables.
+*  tbl.pq stores table-related variables; these are prefixed with an underscore (_) to indicate they are global variables (e.g., @_adm...).
+*  Table name variables are distinguished by appending _t to the end (e.g., @_adm_t).
  * =========================================================
  */
+
 global @_dbtag;
-global @_bbs_adm_t , @_bbs_ct_t, @_bbs_t,@_bbs_memo_t ;
+global @_bbs_adm_t, @_bbs_ct_t, @_bbs_t, @_bbs_memo_t;
+global @_adm_t, @_mbr_t, @_mbr_level_t, @_manual_t;
 
+/* --- [1. DB TABLE PREFIX & TAG CONFIGURATION] --- */
 @_dbtag = "pq";
-@_bbs_adm_t = @_dbtag."_bbs_config";
 
-@_bbs_ct_t  = @_dbtag."_bbs_category";
-@_bbs_t      = @_dbtag."_bbs_data";
-@_bbs_memo_t = @_dbtag."_bbs_memo";
- ]]
+/* --- [2. CORE SYSTEM TABLES MAPPING] --- */
+@_mbr_t       = @_dbtag . "_member";
+@_mbr_level_t = @_dbtag . "_member_level";
+
+/* --- [3. BULLETIN BOARD SYSTEM (BBS) TABLES MAPPING] --- */
+@_bbs_t      = @_dbtag . "_bbs_data";
+@_bbs_memo_t = @_dbtag . "_bbs_memo";
+
+]]

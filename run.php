@@ -1,8 +1,8 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.6)
- * FILENAME : /run.php
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /run.php
  * COMPONENT : Core Bootstrapper, Dependency Router & Layout Pipeline
  * =========================================================
  */
@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-//서브/가상 디렉토리 설정 (최상위 루트 사용 시 '' 또는 '/'로 설정)
+// Virtual directory path configuration (Set '' or '/' for root execution)
 define('PQ_VIRTUAL', '/');
 
 $virtual_path = (defined('PQ_VIRTUAL') && PQ_VIRTUAL !== '/' && PQ_VIRTUAL !== '') ? '/' . trim(PQ_VIRTUAL, '/') : '';
@@ -27,63 +27,72 @@ define('PQ_HOME', PQ_URL . "/index");
 define('PQ_TMP', PQ_DIR . "/pq/tmp");
 define('ATTACH_DIR', PQ_DIR . '/attach/');
 
-$request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$request_path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 define('PQ_SELF', $request_path);
 
-define('PQ_VERSION', "BETA VERSION 9.1");
+define('PQ_VERSION', "BETA VERSION 9.1.7");
 define('PQ_DN', "https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO?usp=drive_link");
 $pq_version = PQ_VERSION;
 
-define('APP_SECRET', bin2hex(random_bytes(32)));
+if (!defined('APP_SECRET')) {
+    define('APP_SECRET', bin2hex(random_bytes(32)));
+}
 
-function layout($use = true) {
-    $GLOBALS['layout_use'] = $use;
+if (!function_exists('layout')) {
+    function layout($use = true) {
+        $GLOBALS['layout_use'] = $use;
+    }
 }
 
 /* ==========================================================
- * 1. CORE MODULE LOAD
+ * 1. CORE MODULE LOAD PIPELINE
  * ========================================================== */
 $core = [
-    'date', 'db', 'excel', 'file', 'http', 'form',
+    'pin', 'date', 'db', 'excel', 'file', 'http', 'form',
     'func', 'list', 'object', 'session', 'cookie',
     'text', 'rgx', 'html', 'trace', 'auth', 'pq', 'util',
-    'pin', 'ret'
+    'ret'
 ];
 foreach ($core as $file) {
-    require_once PQ_DIR . "/pq/core/{$file}.php";
+    $core_path = PQ_DIR . "/pq/core/{$file}.php";
+    if (file_exists($core_path)) {
+        require_once $core_path;
+    }
 }
 
 /* ==========================================================
- * 2. ENGINE BOOT
+ * 2. ENGINE BOOT PIPELINE
  * ========================================================== */
 require_once PQ_DIR . "/pq/engine/ready.php";
 require_once PQ_DIR . "/pq/engine/runner.php";
 require_once PQ_DIR . "/pq/engine/router.php";
 
 /* ==========================================================
- * 3. PLUGIN BOOT - APP
+ * 3. PLUGIN BOOT PIPELINE - APP
  * ========================================================== */
 if (file_exists(PQ_DIR . "/pq/plugin/app.php")) {
     require_once PQ_DIR . "/pq/plugin/app.php";
-    $GLOBALS['app'] = pq_app();
-    $app = $GLOBALS['app'];
+    if (function_exists('pq_app')) {
+        $GLOBALS['app'] = pq_app();
+        $app = $GLOBALS['app'];
+    }
 }
 
 /* ==========================================================
- * 4. ROUTER REGISTER (라우팅 전용 파일 호출)
+ * 4. ROUTER REGISTER
  * ========================================================== */
 if (file_exists(PQ_DIR . "/pq/engine/route_list.php")) {
     require_once PQ_DIR . "/pq/engine/route_list.php";
 }
 
 /* ==========================================================
- * 5. ROUTER EXECUTE
+ * 5. ROUTER EXECUTE PIPELINE
  * ========================================================== */
 $route = PQRouter::run();
 
 if ($route === false) {
     http_response_code(404);
-    if (file_exists(PQ_DIR . "/html/error/404.pq")) {
+    if (file_exists(PQ_DIR . "/html/error/404.pq") && function_exists('run_pq')) {
         run_pq(PQ_DIR . "/html/error/404.pq");
     } else {
         echo "404 Not Found";
@@ -92,7 +101,7 @@ if ($route === false) {
 }
 
 /* ==========================================================
- * 6. LAYOUT PIPELINE
+ * 6. LAYOUT PIPELINE EXECUTION
  * ========================================================== */
 $target_pq  = false;
 $route_type = 'page';
@@ -112,8 +121,8 @@ if ($route && is_array($route)) {
 }
 
 // Dynamic Directory Environment Normalization
-$current_path = $_SERVER['PATH_INFO'] ?? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$base_path    = dirname($_SERVER['SCRIPT_NAME']);
+$current_path = $_SERVER['PATH_INFO'] ?? parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$base_path    = dirname($_SERVER['SCRIPT_NAME'] ?? '');
 $current_path = str_replace($base_path, '', $current_path);
 
 if (!empty($virtual_path)) {
@@ -126,14 +135,16 @@ $is_admin       = (strpos($current_path, '/csm') === 0 || strpos($current_path, 
 $is_main        = ($current_path === '/' || $current_path === '/index' || $current_path === '/index.pq');
 $layout_dir     = $is_admin ? PQ_DIR . '/html/csm/layout' : PQ_DIR . '/html/layout';
 
-import_pq(PQ_DIR . '/init.pq'); 
-import_pq(PQ_DIR . '/tbl.pq');
+if (function_exists('import_pq')) {
+    if (file_exists(PQ_DIR . '/init.pq')) import_pq(PQ_DIR . '/init.pq'); 
+    if (file_exists(PQ_DIR . '/tbl.pq'))  import_pq(PQ_DIR . '/tbl.pq');
+}
 
 $layout_use = ($route_type !== 'api');
 
 if ($layout_use) {
     if ($is_mobile_zone) {
-        run_pq($layout_dir . '/top_m.pq');
+        if (function_exists('run_pq')) run_pq($layout_dir . '/top_m.pq');
     } else {
         if ($is_admin) {
             $top_file    = "top.pq";
@@ -150,10 +161,10 @@ if ($layout_use) {
                 $bottom_file = "s_bottom.pq";                            
             }       
         }
-        run_pq($layout_dir . "/" . $top_file);
+        if (function_exists('run_pq')) run_pq($layout_dir . "/" . $top_file);
         echo '<div class="pq-container">';
         
-        if (!$is_main) {
+        if (!$is_main && function_exists('run_pq')) {
             run_pq($layout_dir . "/" . $left_file);
         }
         
@@ -163,23 +174,23 @@ if ($layout_use) {
 }
 
 if ($target_pq && file_exists($target_pq)) {
-    run_pq($target_pq);
+    if (function_exists('run_pq')) run_pq($target_pq);
 } else {
     http_response_code(404);
-    run_pq(PQ_DIR . '/html/error/404.pq');
+    if (function_exists('run_pq')) run_pq(PQ_DIR . '/html/error/404.pq');
 }
 
 if ($layout_use) {
     if ($is_mobile_zone) {
-        run_pq($layout_dir . '/bottom_m.pq');
+        if (function_exists('run_pq')) run_pq($layout_dir . '/bottom_m.pq');
     } else {
         echo '</div>';
         echo '</main>';
         echo '</div>';
-        run_pq($layout_dir . "/" . $bottom_file);
+        if (function_exists('run_pq')) run_pq($layout_dir . "/" . $bottom_file);
     }
 }
 
 $html_output = ob_get_clean();
-echo pq_output_filter($html_output);
+echo function_exists('pq_output_filter') ? pq_output_filter($html_output) : $html_output;
 ?>
