@@ -1,17 +1,20 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.6)
- * FILENAME : /pq/engine/runner.php
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/engine/runner.php
  * COMPONENT : run_pq / Core Cache & DX Error Code System 
  * =========================================================
  */
+
+// [CONFIG] Context Output Escaping Constants
 define('PQ_CTX_TEXT',   0);
 define('PQ_CTX_ATTR',   1);
 define('PQ_CTX_HTML',   2);
 define('PQ_CTX_SCRIPT', 3);
 define('PQ_CTX_STYLE',  4);
 
+// [CONFIG] Core Helper Bridge Mapping
 if (!defined('PQ_RESERVED_MAP')) {
     define('PQ_RESERVED_MAP', [
         'auth'    => 'auth()->',
@@ -31,21 +34,19 @@ if (!defined('PQ_RESERVED_MAP')) {
 }
 
 $GLOBALS['PQ_COMPILE_LOG'] = [
-    'cache' => [],
-    'guard' => [],
-    'compile' => [],
+    'cache'     => [],
+    'guard'     => [],
+    'compile'   => [],
     'optimizer' => [],
-    'error' => []
+    'error'     => []
 ];
 
-// 치명적 예외(Throwable) 발생 시 레이아웃 깨짐 방지 및 에러 전면 화면 출력
+// [REQUIRED] Global Exception Handler for Unhandled Throwables
 set_exception_handler(function (\Throwable $e) {
-    // 🚀 핵심: 이전에 찍혀있던 좌측 메뉴/상단 레이아웃 버퍼를 깨끗이 지움!
     while (ob_get_level() > 0) { 
         ob_end_clean(); 
     }
 
-    // 기본 HTML 뼈대 세팅 (메뉴 없이 중앙 전체 화면으로 렌더링)
     echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PQ DSL System Error</title></head>';
     echo '<body style="background:#121215; margin:0; padding:40px 20px; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; box-sizing:border-box;">';
     echo '<div class="main-content-error-wrapper" style="width:100%; max-width:1100px;">';
@@ -66,18 +67,19 @@ function pq_output_func($ctx){
     }
 }
 
+/**
+ * [CONFIG] Expression Compiler Pipeline
+ */
 function pq_compile_expr($expr) {
-    // 🎯 [v9.1.6 엄격 타입 단속 1]: $배열 변수에 Dot(.) 객체 접근 시도 시 즉시 에러 발생
     if (preg_match('/(\$[a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', $expr, $m)) {
         throw new \RuntimeException(
-            "[PQ-E1004] 배열 변수({$m[1]})에는 Dot(.) 객체 접근자를 사용할 수 없습니다. 브래킷 {$m[1]}['{$m[2]}'] 구문으로 수정하세요."
+            "[PQ-E1004] Array variable ({$m[1]}) cannot use Dot (.) property accessor. Use bracket syntax {$m[1]}['{$m[2]}'] instead."
         );
     }
 
-    // 🎯 [v9.1.6 엄격 타입 단속 2]: #객체 변수에 브래킷['키'] 배열 접근 시도 시 즉시 에러 발생
     if (preg_match('/(#[a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*[\'"]?([a-zA-Z0-9_]+)[\'"]?\s*\]/', $expr, $m)) {
         throw new \RuntimeException(
-            "[PQ-E1005] 객체 변수({$m[1]})에는 브래킷(['']) 배열 접근자를 사용할 수 없습니다. Dot {$m[1]}.{$m[2]} 구문으로 수정하세요."
+            "[PQ-E1005] Object variable ({$m[1]}) cannot use Bracket (['']) array accessor. Use Dot syntax {$m[1]}.{$m[2]} instead."
         );
     }
 
@@ -90,12 +92,8 @@ function pq_compile_expr($expr) {
         $expr
     );
 
-    // #rs.code -> $rs->code (객체 속성 정석 치환)
     $expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1->$2', $expr);
-    
-    // 🎯 auth.xxx -> auth()->xxx 직관적 사전 치환
     $expr = preg_replace('/(?<![\$a-zA-Z0-9_])auth\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'auth()->$1', $expr);
-    
     $expr = preg_replace('/@([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
     $expr = preg_replace('~#([a-zA-Z_][a-zA-Z0-9_]*)~', '$\\1', $expr);
     $expr = preg_replace('/(?<![\$a-zA-Z0-9_])url\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'PQRouter::$1', $expr);
@@ -106,7 +104,6 @@ function pq_compile_expr($expr) {
     
     $expr = preg_replace('/(\)|\]|\$[a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/', '$1->$2(', $expr);
     
-    // Exception / Throwable 매핑
     $expr = preg_replace('/(\$(?:e|err|ex|exception))\->message\b/i', '$1->getMessage()', $expr);
     $expr = preg_replace('/(\$(?:e|err|ex|exception))\->code\b/i',    '$1->getCode()', $expr);
     $expr = preg_replace('/(\$(?:e|err|ex|exception))\->file\b/i',    '$1->getFile()', $expr);
@@ -119,10 +116,12 @@ function pq_compile_expr($expr) {
 function import_pq($file_path) {
     if (file_exists($file_path)) { run_pq($file_path); }
 }
+
 function pq_resolve_path($path) {    
     $path = str_replace('/path/', '', $path);
     return ltrim($path, '/');
 }
+
 function pq_parse_var($code, $i){
     $len = strlen($code); $expr = ''; $i++;
     while($i < $len){
@@ -147,10 +146,9 @@ function pq_parse_object($code, $i){
     return [$expr, $i - 1]; 
 }
 
-// 🚀 pq.print() 파서 정밀 보완
 function pq_compile_print($code) {
     $len = strlen($code); 
-    $i = 9; // 'pq.print(' 스킵
+    $i = 9;
     $buffer = ''; $args = [];
     
     while ($i < $len) {
@@ -160,7 +158,6 @@ function pq_compile_print($code) {
             if (strlen($buffer) > 0 && trim($buffer) !== '') { $args[] = '"' . addslashes($buffer) . '"'; }
             $buffer = ''; break;
         }
-        // 🚀 핵심: trim()을 빼서 "30일 후: " 내부의 띄어쓰기 공백을 완벽 보존!
         if ($ch == ',' || $ch == '.') {
             if (strlen($buffer) > 0 && trim($buffer) !== '') { $args[] = '"' . addslashes($buffer) . '"'; }
             $buffer = ''; $i++; continue;
@@ -216,6 +213,9 @@ function pq_parse_array($code, $i){
     return [$expr,$i];
 }
 
+/**
+ * [REQUIRED] Core Template Execution Engine & Context Evaluator
+ */
 function run_pq($file_path, $__parent_vars = []) {
     if (!file_exists($file_path)) return;
     static $call_stack = []; static $depth = 0;
@@ -234,8 +234,7 @@ function run_pq($file_path, $__parent_vars = []) {
         extract($__parent_vars, EXTR_SKIP);
     }
     
-    // 🎯 $auth 전역 변수 로드
-    global $version, $db, $form, $file, $session, $cookie, $http, $date, $time, $trace, $app, $ai, $iot, $text, $excel, $pdf, $navi, $html, $auth,$pin, $ret;
+    global $version, $db, $form, $file, $session, $cookie, $http, $date, $time, $trace, $app, $ai, $iot, $text, $excel, $pdf, $navi, $html, $auth, $pin, $ret;
     
     if (empty($auth))     { $auth     = isset($GLOBALS['auth']) ? $GLOBALS['auth'] : (function_exists('auth') ? auth() : null); }
     if (empty($db))       { $db       = isset($GLOBALS['db']) ? $GLOBALS['db'] : (function_exists('db') ? db() : null); }
@@ -244,20 +243,20 @@ function run_pq($file_path, $__parent_vars = []) {
     if (empty($session))  { $session  = isset($GLOBALS['session']) ? $GLOBALS['session'] : (function_exists('session_pq') ? session_pq() : null); }
     if (empty($cookie))   { $cookie   = isset($GLOBALS['cookie']) ? $GLOBALS['cookie'] : (function_exists('cookie') ? cookie() : null); }
 
-	// FORM 초기화 및 검증
-	if (empty($form) || !is_object($form)) {
-		$form = function_exists('form') ? form() : null;
-	}
-	if (!is_object($form)) {
-		throw new RuntimeException('[PQ-E1003] PQ FORM CORE 초기화 실패');
-	}
-	// FILE 초기화 및 검증
-	if (empty($file) || !is_object($file)) {
-		$file = function_exists('file_pq') ? file_pq() : null;
-	}
-	if (!is_object($file)) {
-		throw new RuntimeException('[PQ-E1002] PQ FILE CORE 초기화 실패');
-	}
+    if (empty($form) || !is_object($form)) {
+        $form = function_exists('form') ? form() : null;
+    }
+    if (!is_object($form)) {
+        throw new RuntimeException('[PQ-E1003] PQ FORM CORE Initialization Failed');
+    }
+
+    if (empty($file) || !is_object($file)) {
+        $file = function_exists('file_pq') ? file_pq() : null;
+    }
+    if (!is_object($file)) {
+        throw new RuntimeException('[PQ-E1002] PQ FILE CORE Initialization Failed');
+    }
+
     if (empty($date))     { $date     = isset($GLOBALS['date']) ? $GLOBALS['date'] : (function_exists('date_pq') ? date_pq() : null); }
     if (empty($time))     { $time     = isset($GLOBALS['time']) ? $GLOBALS['time'] : (function_exists('time_pq') ? time_pq() : null); }
     if (empty($text))     { $text     = isset($GLOBALS['text']) ? $GLOBALS['text'] : (function_exists('text') ? text() : null); }
@@ -462,24 +461,20 @@ function perform_lexing($content) {
                 $i += ($jump_len - 1);
                 continue;
             }            
-			if ($char === 'd' && strncasecmp(substr($content, $i, 5), "date(", 5) === 0) {
-				$prevChar = ($i > 0) ? $content[$i - 1] : '';
-				$prevTwoChar = ($i > 1) ? substr($content, $i - 2, 2) : '';
+            if ($char === 'd' && strncasecmp(substr($content, $i, 5), "date(", 5) === 0) {
+                $prevChar = ($i > 0) ? $content[$i - 1] : '';
+                $prevTwoChar = ($i > 1) ? substr($content, $i - 2, 2) : '';
 
-				// 1. 단어의 일부 ($date, update, candidate) 인지 검사
-				$isInsideWord = preg_match('/[a-zA-Z0-9_\$]/', $prevChar);
-				
-				// 2. 객체 메서드 호출 ($obj->date) 인지 검사
-				$isMethodCall = ($prevTwoChar === '->');
+                $isInsideWord = preg_match('/[a-zA-Z0-9_\$]/', $prevChar);
+                $isMethodCall = ($prevTwoChar === '->');
 
-				// 순수 전역 함수 date() 호출일 때만 치환
-				if (!$isInsideWord && !$isMethodCall) {
-					$output .= "date_pq(";
-					$i += 4;
-					continue;
-				}
-			}
-			
+                if (!$isInsideWord && !$isMethodCall) {
+                    $output .= "date_pq(";
+                    $i += 4;
+                    continue;
+                }
+            }
+            
             if ($is_front_boundary) {
                 if (in_array($char, ['i', 'e', 'f', 'w', 'h', 'b', 'r', 's'])) {
                     if ($char === 'r' && substr($content, $i, 5) === "rule:") {
@@ -496,7 +491,7 @@ function perform_lexing($content) {
                     elseif ($char === 'f' && substr($content, $i, 7) === "foreach") { $ctrl_word = "foreach"; }
                     elseif ($char === 'f' && substr($content, $i, 3) === "for") { $ctrl_word = "for"; }
                     elseif ($char === 'w' && substr($content, $i, 5) === "while") { $ctrl_word = "while"; }
-					elseif ($char === 's' && substr($content, $i, 6) === "switch") { $ctrl_word = "switch"; }					
+                    elseif ($char === 's' && substr($content, $i, 6) === "switch") { $ctrl_word = "switch"; }                   
                     elseif ($char === 'h' && substr($content, $i, 3) === "has") { $ctrl_word = "has"; }
                     elseif ($char === 'b' && substr($content, $i, 5) === "blank") { $ctrl_word = "blank"; }
                     elseif ($char === 'r' && substr($content, $i, 6) === "repeat") { $ctrl_word = "repeat"; } 
@@ -536,7 +531,7 @@ function perform_lexing($content) {
                                         }
                                         $repeat_expr .= $c_char;
                                         continue;
-                                    }                                    
+                                    }                                        
                                     if ($c_char === " " || $c_char === "\t" || $c_char === "\n" || $c_char === "\r") { continue; }
                                     if ($c_char === ':') {
                                         $colon_found = true; $final_jump_idx = $k;
@@ -659,25 +654,25 @@ function perform_lexing($content) {
                 $output .= $reg_match[0]; $i += (strlen($reg_match[0]) - 1); continue;
             }
             
-			$maps = [ 
-				'pq.'     => 'pq()->', 				
-				'auth.'   => 'auth()->', 
-				'url.'    => 'PQRouter::',
-				'app.'    => '$app->', 
-				'trace.'  => 'Trace::', 
-				'db.'     => '$db->', 
-				'date.'   => 'date_pq()->', 
-				'time.'   => '$time->', 
-				'file.'   => 'file_pq()->', 
-				'http.'   => '$http->', 
-				'session.'=> '$session->', 
-				'form.'   => '$form->', 
-				'rgx.'    => '$rgx->', 
-				'cookie.' => '$cookie->', 
-				'text.'   => '$text->', 
-				'navi.'   => '$navi->', 
-				'PQRouter.' => 'PQRouter::'
-			];
+            $maps = [ 
+                'pq.'     => 'pq()->',              
+                'auth.'   => 'auth()->', 
+                'url.'    => 'PQRouter::',
+                'app.'    => '$app->', 
+                'trace.'  => 'Trace::', 
+                'db.'     => '$db->', 
+                'date.'   => 'date_pq()->', 
+                'time.'   => '$time->', 
+                'file.'   => 'file_pq()->', 
+                'http.'   => '$http->', 
+                'session.'=> '$session->', 
+                'form.'   => '$form->', 
+                'rgx.'    => '$rgx->', 
+                'cookie.' => '$cookie->', 
+                'text.'   => '$text->', 
+                'navi.'   => '$navi->', 
+                'PQRouter.' => 'PQRouter::'
+            ];
             $matched = false;
             foreach($maps as $k => $v) {
                 if (strncasecmp(substr($content, $i, strlen($k)), $k, strlen($k)) === 0) {
@@ -698,55 +693,51 @@ function perform_lexing($content) {
                     }
                 }
             }                
-			if ($char === '@') {
-				$remain = substr($content, $i + 1);
-				if (preg_match('/^(auth|app|url|db|http|session|form|date|time|file|text|cookie|trace)\.[a-zA-Z_]/i', $remain)) { 
-					$output .= '@'; 
-					continue; 
-				}
-				
-				list($expr, $i) = pq_parse_var($content, $i); 
-				$output .= '$' . $expr; 
-				continue;
-			}
-			if ($char === '#' && $state === "NORMAL") {
-				$remain_hash = substr($content, $i + 1);
+            if ($char === '@') {
+                $remain = substr($content, $i + 1);
+                if (preg_match('/^(auth|app|url|db|http|session|form|date|time|file|text|cookie|trace)\.[a-zA-Z_]/i', $remain)) { 
+                    $output .= '@'; 
+                    continue; 
+                }
+                
+                list($expr, $i) = pq_parse_var($content, $i); 
+                $output .= '$' . $expr; 
+                continue;
+            }
+            if ($char === '#' && $state === "NORMAL") {
+                $remain_hash = substr($content, $i + 1);
 
-				// 🚀 1. #변수 = session.get(...) 패턴 (문법 괄호 충돌 완벽 방지)
-				if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*session\.get\s*\((.*?)\)/i', $remain_hash, $m)) {
-					$var_name = $m[1];
-					$sess_arg = pq_compile_expr(trim($m[2]));
-					
-					// 삼항 연산자로 세션 데이터가 있을 때만 (object) 변환, 없으면 null 유지
-					$output .= '$' . $var_name . ' = ($s_data = $session->get(' . $sess_arg . ')) ? (is_array($s_data) ? (object)$s_data : $s_data) : null';
-					
-					// '#변수명 = session.get(...)' 전체 길이를 인덱스에서 정확히 스킵
-					$i += strlen('#' . $m[0]) - 1;
-					continue;
-				}
+                if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*session\.get\s*\((.*?)\)/i', $remain_hash, $m)) {
+                    $var_name = $m[1];
+                    $sess_arg = pq_compile_expr(trim($m[2]));
+                    
+                    $output .= '$' . $var_name . ' = ($s_data = $session->get(' . $sess_arg . ')) ? (is_array($s_data) ? (object)$s_data : $s_data) : null';
+                    
+                    $i += strlen('#' . $m[0]) - 1;
+                    continue;
+                }
 
-				// 🚀 2. #변수 = [ ... ] 패턴 (배열 대입 시 객체로 자동 캐스팅)
-				if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\[/i', $remain_hash, $m)) {
-					$var_name = $m[1];
-					$output .= '$' . $var_name . ' = (object)[';
-					$i += strlen('#' . $m[0]) - 1;
-					continue;
-				}
+                if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\[/i', $remain_hash, $m)) {
+                    $var_name = $m[1];
+                    $output .= '$' . $var_name . ' = (object)[';
+                    $i += strlen('#' . $m[0]) - 1;
+                    continue;
+                }
 
-				if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\./i', $remain_hash, $m) || 
-					preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[/i', $remain_hash, $m) || 
-					preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*obj\s*\(/i', $remain_hash, $m) || 
-					preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*#[a-zA-Z_]/i', $remain_hash, $m)) {
-					$output .= '$' . $m[1]; 
-					$i += strlen($m[1]); 
-					continue;
-				} 
-				else if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)/', $remain_hash, $m)) {
-					$output .= '$' . $m[1]; 
-					$i += strlen($m[1]); 
-					continue;
-				}
-			}
+                if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\./i', $remain_hash, $m) || 
+                    preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[/i', $remain_hash, $m) || 
+                    preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*obj\s*\(/i', $remain_hash, $m) || 
+                    preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*#[a-zA-Z_]/i', $remain_hash, $m)) {
+                    $output .= '$' . $m[1]; 
+                    $i += strlen($m[1]); 
+                    continue;
+                } 
+                else if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)/', $remain_hash, $m)) {
+                    $output .= '$' . $m[1]; 
+                    $i += strlen($m[1]); 
+                    continue;
+                }
+            }
             if ($char === 'i' && substr($content, $i, 3) === "inc") {
                 $remain_line = substr($content, $i);
                 if (preg_match('~^inc\s*\(?\s*["\']([^"\']+)["\']\s*\)?\s*;~i', $remain_line, $match)) {
@@ -767,7 +758,7 @@ function perform_lexing($content) {
             if ($char === '[' && $next === '[') {
                 $remain_str = substr($content, $i);
                 if (preg_match('/^\[\[\s*=\s*(.*?)\s*\]\]/', $remain_str, $str_m)) {
-                    $payload = pq_compile_expr(trim($str_m[1]));                      
+                    $payload = pq_compile_expr(trim($str_m[1]));                     
                     $fn = pq_output_func($ctx);                  
                     $output .= $quote_char . ' . ' . $fn . '(' . $payload . ') . ' . $quote_char;
                     $i += (strlen($str_m[0]) - 1); continue;
@@ -775,7 +766,7 @@ function perform_lexing($content) {
             }
             if ($char === '@') {
                 $remain = substr($content, $i + 1, 15);
-				if (!preg_match('/^(auth|app|url|db|http|session|form|date|trace)\./i', $remain) && preg_match('/^[a-zA-Z_]/', $remain)) {
+                if (!preg_match('/^(auth|app|url|db|http|session|form|date|trace)\./i', $remain) && preg_match('/^[a-zA-Z_]/', $remain)) {
                     $output .= '$'; continue;
                 }
             }
@@ -789,33 +780,28 @@ function perform_lexing($content) {
     return $output;
 }
 
-
 function perform_optimization($output) {
-// 🚀 ->run() 으로 끝나는 경우도 ->value() 자동 결합 대상에서 제외
     $output = preg_replace(
         '/(\$form\s*->\s*get\s*\(.*?\)(?:->[a-zA-Z0-9_]+\s*\(.*?\))*)(?<!->value\(\))(?<!->int\(\))(?<!->string\(\))(?<!->bool\(\))(?<!->float\(\))(?<!->val\(\))(?<!->error\(\))(?<!->run\(\))\s*;/i',
         '$1->value();',
         $output
     );
-// 🚀 [추가] form()->get(...) 체이닝 끝에 마감 메서드가 없으면 ->value() 자동 결합
-    // 이미 ->value(), ->int(), ->string(), ->bool(), ->float(), ->val(), ->error() 등으로 마감된 경우는 제외
     $output = preg_replace(
         '/(\$form\s*->\s*get\s*\(.*?\)(?:->[a-zA-Z0-9_]+\s*\(.*?\))*)(?<!->value\(\))(?<!->int\(\))(?<!->string\(\))(?<!->bool\(\))(?<!->float\(\))(?<!->val\(\))(?<!->error\(\))\s*;/i',
         '$1->value();',
         $output
     );
     $output = preg_replace('/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*->\s*val\((.*?)\)\s*;/i', '$$1 = val($$1, $2);', $output);
-    // 중복 치환 제거 및 단순화
     $output = preg_replace('/<\?php\s*=\s*/i', '<?= ', $output);
     $output = preg_replace('/;[ \t\n]*;/', ';', $output);
     $output = preg_replace_callback('/\(\$([a-zA-Z0-9_]+)\)->\{\$([a-zA-Z0-9_]+)\}/i', function($m) { return '$' . $m[1] . '->{' . $m[2] . '}'; }, $output);
 
     return $output;
 }
+
 function pq_guard($content) {
     return preg_replace_callback('~<pq>(.*?)</pq>~is', function ($m) {
         $inner = $m[1];
-        // 🚀 <pq> 태그 내부의 모든 PHP 시작/종료 태그 및 PQ DSL 기호를 엔티티로 치환 (실행 차단)
         $safe_inner = str_replace(
             ['<?=', '<?php', '<?', '?>', '[[', ']]'],
             ['&lt;?=', '&lt;?php', '&lt;?', '?&gt;', '&#91;&#91;', '&#93;&#93;'],
@@ -824,11 +810,14 @@ function pq_guard($content) {
         return '<pq>' . $safe_inner . '</pq>';
     }, $content);
 }
+
 function pq_log($section, $step, $msg){
     $GLOBALS['PQ_COMPILE_LOG'][$section][] = [ 'step' => $step, 'time' => microtime(true), 'msg'  => $msg ];
 }
 
-// 🎯 [v9.0.0 핵심 스펙]: PQ DSL 전용 고유 에러 코드 식별 및 힌트 연동 대시보드
+/**
+ * [REQUIRED] DX Dashboard Error Rendering System
+ */
 function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
     $error_file = $e->getFile(); $error_line = $e->getLine();
     $cache_name = basename($error_file, '.php');
@@ -850,29 +839,29 @@ function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
 
     if (strpos($err_msg, 'Cannot access offset of type string on string') !== false) {
         $pq_error_code = "PQ-E1001";
-        $hint_box = "💡 <b>[배열 접근 오폭 힌트]</b> 일반 문자열(string)을 배열처럼 대괄호 <code>['key']</code>나 <code>[idx]</code>로 열려고 시도했습니다.<br>오류 라인의 변수(예: <code>@row</code>, <code>$skin</code>)가 현재 배열이 아니라 날것의 텍스트 문자열 상태인지 점검하세요.";
+        $hint_box = "💡 <b>[Array Offset Error]</b> Attempted to access a string variable as an array using <code>['key']</code> or <code>[idx]</code>.<br>Check if the variable (e.g. <code>@row</code>, <code>$skin</code>) is a raw string instead of an array.";
     } elseif (strpos($err_msg, 'Undefined variable') !== false) {
         $pq_error_code = "PQ-E2001";
-        $hint_box = "💡 <b>[미선언 변수 참조 힌트]</b> 정의되지 않은 변수를 호출했습니다. 오타가 났거나 <code>global</code> 선언, 혹은 부모단에서 변수 전파가 누락되었는지 확인하세요.";
+        $hint_box = "💡 <b>[Undefined Variable]</b> Referenced an undefined variable. Check for typos, <code>global</code> scope declarations, or missing parameter passing.";
     } elseif (strpos($err_msg, 'Call to a member function') !== false) {
         $pq_error_code = "PQ-E3001";
-        $hint_box = "💡 <b>[객체 메서드 오폭 힌트]</b> 인스턴스 객체가 아닌 일반 변수나 null에 대고 <code>.method()</code> 또는 <code>->method()</code>를 호출했습니다.";
+        $hint_box = "💡 <b>[Null Object Method Error]</b> Called a method <code>.method()</code> or <code>->method()</code> on a null value or non-object variable.";
     } elseif ($e instanceof \ArgumentCountError) {
         $pq_error_code = "PQ-E4001";
-        $hint_box = "💡 <b>[함수 인자 유실 힌트]</b> 함수 또는 메서드가 요구하는 필수 인자(Arguments)의 개수보다 적은 개수의 값이 인입되었습니다.";
+        $hint_box = "💡 <b>[Argument Count Error]</b> Insufficient arguments passed to a function or method.";
     } elseif (strpos($err_msg, 'PQPin') !== false) {
-		$pq_error_code = "PQ-E5001";
-		$hint_box = "💡 <b>[Pin 바인딩 힌트]</b> <code>pin()</code> 변수 바인딩 중 참조가 올바르지 않거나 허용되지 않은 타입 연산이 시도되었습니다.";
-	} elseif (strpos($err_msg, 'PQRet') !== false) {
-		$pq_error_code = "PQ-E5002";
-		$hint_box = "💡 <b>[Ret 반환 타입 힌트]</b> <code>ret()</code> 반환 변환 중 JSON 디코딩 실패 또는 객체/배열 캐스팅 에러가 발생했습니다.";
-	} elseif (strpos($err_msg, 'PQ-E1004') !== false) {
-		$pq_error_code = "PQ-E1004";
-		$hint_box = "💡 <b>[배열/객체 문법 오폭 힌트]</b> <code>\$변수</code>는 <b>배열(Array)</b>입니다. Dot(<code>.</code>) 대신 브래킷 <code>\$item['key']</code> 방식을 사용해야 합니다.";
-	} elseif (strpos($err_msg, 'PQ-E5005') !== false || strpos($err_msg, 'PQ-E1005') !== false) {
-		$pq_error_code = "PQ-E1005";
-		$hint_box = "💡 <b>[객체/배열 문법 오폭 힌트]</b> <code>#변수</code>는 <b>객체(Object)</b>입니다. 브래킷(<code>['']</code>) 대신 Dot <code>#item.key</code> 방식을 사용해야 합니다.";
-	}
+        $pq_error_code = "PQ-E5001";
+        $hint_box = "💡 <b>[Pin Binding Error]</b> Invalid reference or illegal type operation encountered during <code>pin()</code> binding.";
+    } elseif (strpos($err_msg, 'PQRet') !== false) {
+        $pq_error_code = "PQ-E5002";
+        $hint_box = "💡 <b>[Ret Type Casting Error]</b> JSON decoding failure or array/object casting error occurred during <code>ret()</code> conversion.";
+    } elseif (strpos($err_msg, 'PQ-E1004') !== false) {
+        $pq_error_code = "PQ-E1004";
+        $hint_box = "💡 <b>[Array vs Object Access Error]</b> <code>\$var</code> is an <b>Array</b>. Use bracket syntax <code>\$item['key']</code> instead of Dot (<code>.</code>).";
+    } elseif (strpos($err_msg, 'PQ-E5005') !== false || strpos($err_msg, 'PQ-E1005') !== false) {
+        $pq_error_code = "PQ-E1005";
+        $hint_box = "💡 <b>[Object vs Array Access Error]</b> <code>#var</code> is an <b>Object</b>. Use Dot syntax <code>#item.key</code> instead of bracket (<code>['']</code>).";
+    }
 
     $trace_lines = explode("\n", $e->getTraceAsString());
 
@@ -889,7 +878,7 @@ function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
     echo "<div style='background:#18181b; border:1px solid #27272a; padding:15px; border-radius:8px; margin-bottom:20px; font-size:13.5px; line-height:1.7;'>";
     echo "  <div style='color:#a1a1aa;'><span style='color:#38bdf8; font-weight:bold; width:120px; display:inline-block;'>📄 Template:</span> <span style='color:#e4e4e7; font-weight:bold;'>" . htmlspecialchars($original_file) . "</span></div>";
     echo "  <div style='color:#a1a1aa;'><span style='color:#eab308; font-weight:bold; width:120px; display:inline-block;'>⚙️ Compiled:</span> <span style='color:#a1a1aa; font-size:12px;'>" . htmlspecialchars($error_file) . "</span></div>";
-    echo "  <div style='color:#a1a1aa; margin-top:4px;'><span style='color:#f43f5e; font-weight:bold; width:120px; display:inline-block;'>🎯 Target Line:</span> 원본 파일의 <strong style='color:#fff; background:#f43f5e; padding:2px 6px; border-radius:4px; font-size:14px;'>Line: " . $original_line . "</strong>번 줄을 수정하세요! (캐시 행: {$error_line})</div>";
+    echo "  <div style='color:#a1a1aa; margin-top:4px;'><span style='color:#f43f5e; font-weight:bold; width:120px; display:inline-block;'>🎯 Target Line:</span> Please inspect source file at <strong style='color:#fff; background:#f43f5e; padding:2px 6px; border-radius:4px; font-size:14px;'>Line: " . $original_line . "</strong> (Cache line: {$error_line})</div>";
     echo "</div>";
 
     echo "<div style='background:#2d1a1e; border-left:4px solid #ef4444; padding:15px 20px; border-radius:8px; margin-bottom:20px; color:#fecaca;'>";

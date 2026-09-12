@@ -1,16 +1,17 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.6)
- * FILENAME : /pq365/www/router.php
- * COMPONENT : PQ Engine Router Core (v1.0.7 Synchronized Freeze)
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq365/www/router.php
+ * COMPONENT : PQ Engine Router Core
  * =========================================================
  */
+
 class PQRouter {
     private static $map = [];
     private static $current_uri = '/';
 
-    // 라우팅 규칙 설정
+    // [CONFIG] Register Route Rule
     public static function set($path, $file, $type = 'page') {
         self::$map[$path] = [
             'file' => $file,
@@ -18,7 +19,7 @@ class PQRouter {
         ];
     }
 
-    // [경로 수사 및 타겟 파일 반환]
+    // [REQUIRED] Resolve Current Request Path & Return Target File
     public static function run() {
         $current_path = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $base_path = dirname($_SERVER['SCRIPT_NAME']);
@@ -62,6 +63,7 @@ class PQRouter {
         return false; 
     }
 
+    // [CUSTOM] Active Navigation Link Helper
     public static function active($path) {
         return (self::uri() === '/' . trim((string)$path, '/')) ? 'active' : '';
     }   
@@ -70,16 +72,18 @@ class PQRouter {
         return self::$current_uri;
     }   
 
+    // [CONFIG] Base URL Normalization Helper
     public static function url($path = '') {
         $base_url = defined('PQ_BASE') ? PQ_BASE : '';
         return rtrim($base_url, '/') . '/' . ltrim((string)$path, '/');
-    }	
-	public static function path($path = '') {
+    }   
+
+    public static function path($path = '') {
         return self::url($path);
-    }	
+    }   
 }
 
-// [수정된 부분] 클래스 외부로 이동
+// [CONFIG] Automatic Directory Route Generator
 if (!function_exists('autoRoute')) {
     function autoRoute($dir, $prefix) {
         if (!is_dir($dir)) return;
@@ -92,19 +96,18 @@ if (!function_exists('autoRoute')) {
         }
     }
 }
+
 // =========================================================
-// PQ 단축 헬퍼 함수
+// PQ Core Shortcut Helpers
 // =========================================================
 
 /**
- * 라우팅 등록 단축 함수 (단일/배열 모두 지원)
+ * [CUSTOM] Fluent Route Binding Helper (Supports Single/Batch Arrays)
  */
 if (!function_exists('pq_url')) {
     function pq_url($path, $file = null, $type = 'page') {
-        // 1. $pq_menu 같은 배열이 들어온 경우 일괄 등록
         if (is_array($path)) {
             foreach ($path as $key => $val) {
-                // 사용하려는 스타일: [ ["/m", "html/m/index.pq"], ... ]
                 if (is_array($val)) {
                     $p = $val[0] ?? null;
                     $f = $val[1] ?? null;
@@ -113,7 +116,6 @@ if (!function_exists('pq_url')) {
                         PQRouter::set($p, $f, $t);
                     }
                 } 
-                // 연관 배열 스타일: [ "/m" => "html/m/index.pq" ] 도 자동 지원
                 else if (is_string($key)) {
                     PQRouter::set($key, $val, $type);
                 }
@@ -121,13 +123,12 @@ if (!function_exists('pq_url')) {
             return;
         }
 
-        // 2. 단일 호출: pq_url('/m', 'html/m/index.pq');
         PQRouter::set($path, $file, $type);
     }
 }
 
 /**
- * 자동 라우팅 단축 함수
+ * [CUSTOM] Automatic Directory Route Binding Helper
  */
 if (!function_exists('pq_auto')) {
     function pq_auto($dir, $prefix = '') {
