@@ -97,7 +97,8 @@ function pq_compile_expr($expr) {
     $expr = preg_replace('/@([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
     $expr = preg_replace('~#([a-zA-Z_][a-zA-Z0-9_]*)~', '$\\1', $expr);
     $expr = preg_replace('/(?<![\$a-zA-Z0-9_])url\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'PQRouter::$1', $expr);
-    
+	$expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', '{$1->$2}', $expr);    
+	
     foreach (PQ_RESERVED_MAP as $r => $bridge) {
         $expr = preg_replace('/(?<![\$a-zA-Z0-9_])' . preg_quote($r, '/') . '\.([a-zA-Z_])/i', $bridge . '$1', $expr);
     }   
