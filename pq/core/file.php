@@ -1,11 +1,12 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.2)
- * FILENAME : /pq/core/file.php 
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/core/file.php 
  * COMPONENT : PQ Engine File Matrix Core (v1.2.6 Security Double Lock)
  * =========================================================
  */
+
 class FileMaker {
     private $target_path = "";
     private $temp_file = null;
@@ -16,39 +17,36 @@ class FileMaker {
 
     public function exists($f) { return $this->has($f); }
 
-    // --- [1. 업로드/설정 장비] ---
-	public function upload($field) {
-		// 1. 다중 파일 배열인지 확인 (배열이면 index 0부터 시작하도록 처리)
-		if (isset($_FILES[$field]) && is_array($_FILES[$field]['name'])) {
-			// 다중 파일인 경우, 현재 엔진 구조에 맞춰 첫 번째 파일을 기본값으로 잡거나
-			// 필요시 특정 인덱스를 지정하는 로직을 추가
-			$this->temp_file = [
-				'name'     => $_FILES[$field]['name'][0], // 일단 0번 인덱스 기본 처리
-				'type'     => $_FILES[$field]['type'][0],
-				'tmp_name' => $_FILES[$field]['tmp_name'][0],
-				'error'    => $_FILES[$field]['error'][0],
-				'size'     => $_FILES[$field]['size'][0]
-			];
-		} else {
-			// 단일 파일은 기존 방식 유지
-			$this->temp_file = $_FILES[$field] ?? null;
-		}
-		return $this;
-	}
+    // --- [1. UPLOAD & CONFIGURATION PIPELINE] ---
+    public function upload($field) {
+        // Handle array-based multiple file uploads (Defaults to index 0)
+        if (isset($_FILES[$field]) && is_array($_FILES[$field]['name'])) {
+            $this->temp_file = [
+                'name'     => $_FILES[$field]['name'][0],
+                'type'     => $_FILES[$field]['type'][0],
+                'tmp_name' => $_FILES[$field]['tmp_name'][0],
+                'error'    => $_FILES[$field]['error'][0],
+                'size'     => $_FILES[$field]['size'][0]
+            ];
+        } else {
+            $this->temp_file = $_FILES[$field] ?? null;
+        }
+        return $this;
+    }
 
-	// 2. [추가] 인덱스 지정용 메서드 (루프 구조에 완벽 대응)
-	public function uploadIndex($field, $i) {
-		if (isset($_FILES[$field]['name'][$i])) {
-			$this->temp_file = [
-				'name'     => $_FILES[$field]['name'][$i],
-				'type'     => $_FILES[$field]['type'][$i],
-				'tmp_name' => $_FILES[$field]['tmp_name'][$i],
-				'error'    => $_FILES[$field]['error'][$i],
-				'size'     => $_FILES[$field]['size'][$i]
-			];
-		}
-		return $this;
-	}
+    // Specific index assignment for file arrays in loops
+    public function uploadIndex($field, $i) {
+        if (isset($_FILES[$field]['name'][$i])) {
+            $this->temp_file = [
+                'name'     => $_FILES[$field]['name'][$i],
+                'type'     => $_FILES[$field]['type'][$i],
+                'tmp_name' => $_FILES[$field]['tmp_name'][$i],
+                'error'    => $_FILES[$field]['error'][$i],
+                'size'     => $_FILES[$field]['size'][$i]
+            ];
+        }
+        return $this;
+    }
     
     public function path($p) { 
         $this->target_path = rtrim($p, '/') . '/'; 
@@ -84,7 +82,7 @@ class FileMaker {
     public function random() { $this->new_name = bin2hex(random_bytes(8)); return $this; }
     
     /**
-     * 내부적으로 이미지 확장자명과 매칭되는 순수 바이너리 MIME 화이트리스트
+     * Set allowed image extensions and strict binary MIME whitelist
      */
     public function image() { 
         $this->allow(['jpg','jpeg','png','gif','webp']); 
@@ -93,7 +91,7 @@ class FileMaker {
     }
 
     /**
-     * save 액추에이터
+     * Execution pipeline to validate and save uploaded files
      */
     public function save() {
         if (!$this->temp_file || $this->temp_file['error'] !== 0) return false;
@@ -107,11 +105,11 @@ class FileMaker {
             $real_mime = finfo_file($finfo, $this->temp_file['tmp_name']);
             finfo_close($finfo);
 
-            // 1차 차단: 악성 웹셸 블랙리스트 필터링
+            // Level 1 Security: Block malicious webshell MIME types
             $blacklist_mimes = ['text/php', 'text/x-php', 'application/x-httpd-php', 'application/octet-stream/php'];
             if (in_array($real_mime, $blacklist_mimes)) return false;
 
-            // 2차 차단: image() 격발 시 이미지 사칭 변조 우회 파일 파쇄 (.exe renamed .jpg 영구 진압)
+            // Level 2 Security: MIME type whitelist matching for image uploads
             if (!empty($this->allowed_mimes) && !in_array($real_mime, $this->allowed_mimes)) {
                 return false;
             }
@@ -125,7 +123,7 @@ class FileMaker {
         return false;
     }
 
-    // --- [2. 파일/폴더 핸들링] ---
+    // --- [2. FILE & DIRECTORY HANDLING] ---
     public function read($f) { return file_exists($f) ? file_get_contents($f) : false; }
     public function write($f, $d) { return file_put_contents($f, $d); }
     public function append($f, $d) { return file_put_contents($f, $d, FILE_APPEND); }
@@ -139,7 +137,7 @@ class FileMaker {
     public function move($s, $t) { return rename($s, $t); }
     public function has($f) { return ($f && file_exists($f)); }
 
-	public function clear($dir) {
+    public function clear($dir) {
         if (!is_dir($dir)) return false;
         $files = $this->scan($dir);
         rsort($files); 
@@ -149,7 +147,7 @@ class FileMaker {
     
     public function touch($f) { return touch($f); }
 
-    // --- [3. 수색/리스팅] ---
+    // --- [3. DIRECTORY TRAVERSAL & LISTING] ---
     public function mkdir($p) { if (!is_dir($p)) mkdir($p, 0777, true); return $this; }
     
     public function listdir($p) { 
@@ -167,18 +165,18 @@ class FileMaker {
         return $files;
     }
 
-		// --- [4. 정보 추출] ---
-	public function size($f) { return file_exists($f) ? filesize($f) : 0; }
-	public function ext($f) { return strtolower(pathinfo($f, PATHINFO_EXTENSION)); }
-	public function name($f) { return pathinfo($f, PATHINFO_FILENAME); }
-	public function dirName($f) { return pathinfo($f, PATHINFO_DIRNAME); } // 메서드명 변경 (dir -> dirName)
+    // --- [4. FILE METADATA & UTILITIES] ---
+    public function size($f) { return file_exists($f) ? filesize($f) : 0; }
+    public function ext($f) { return strtolower(pathinfo($f, PATHINFO_EXTENSION)); }
+    public function name($f) { return pathinfo($f, PATHINFO_FILENAME); }
+    public function dirName($f) { return pathinfo($f, PATHINFO_DIRNAME); }
 
-	// --- [추가] 폴더/디렉토리 전용 체크 및 경로 반환 ---
-	public function isDir($p) { return is_dir($p); }
-	public function dir($f = null) { 
-		if ($f === null) return $this; // 체이닝 유지용
-		return pathinfo($f, PATHINFO_DIRNAME); 
-	}
+    public function isDir($p) { return is_dir($p); }
+    public function dir($f = null) { 
+        if ($f === null) return $this; 
+        return pathinfo($f, PATHINFO_DIRNAME); 
+    }
+
     public function mimeType($f) { 
         if (file_exists($f) && function_exists('mime_content_type')) return mime_content_type($f);
         $mimes = [
@@ -191,16 +189,17 @@ class FileMaker {
     
     public function modified($f) { return file_exists($f) ? filemtime($f) : 0; }
     
-// 2. [한글/다국어 지원 safeName]
+    /**
+     * Sanitize filename while preserving Multilingual UTF-8 characters
+     */
     public function safeName($n) {
         $name = pathinfo($n, PATHINFO_FILENAME);
         $ext  = pathinfo($n, PATHINFO_EXTENSION);
-        // 특수문자 제거 (한글/일본어/중국어는 보존)
         $name = preg_replace('/[^\p{L}\p{N}\-_]/u', '_', $name);
         return $name . ($ext ? '.' . strtolower($ext) : '');
     }
 
-    // --- [5. 출력/스트림] ---
+    // --- [5. OUTPUT & STREAMING] ---
     public function download($f, $n = null) {
         if (!$this->has($f)) return false;
         if (headers_sent()) return false;
@@ -230,58 +229,70 @@ class FileMaker {
         fclose($fp); exit;
     }
 
-// 1. [의존성 제거] 
     public function url($path, $name) {
         return '/' . ltrim($path, '/') . '/' . ltrim($name, '/');
     }
-	//썸네일
-	public function thumbnail($src, $dst, $w, $h, $per = false) {
+
+    // --- [6. IMAGE PROCESSING & THUMBNAILS] ---
+    public function thumbnail($src, $dst, $w, $h, $per = false) {
         return $this->makeImage($src, $dst, $w, $h, $per);
-    }	
-	private function makeImage($src, $dst, $width, $height, $per = false) {
-			if (!file_exists($src)) return false;
-			@ini_set('memory_limit', '256M');
-			$info = getimagesize($src);
-			if (!$info) return false;
-			list($orig_w, $orig_h, $type) = $info;
+    }    
 
-			if ($per) {
-				$ratio = min($width / $orig_w, $height / $orig_h);
-				$width = (int)($orig_w * $ratio);
-				$height = (int)($orig_h * $ratio);
-			}
+    private function makeImage($src, $dst, $width, $height, $per = false) {
+        if (!file_exists($src)) return false;
+        @ini_set('memory_limit', '256M');
+        $info = getimagesize($src);
+        if (!$info) return false;
+        list($orig_w, $orig_h, $type) = $info;
 
-			$src_img = match($type) {
-				IMAGETYPE_JPEG => @imagecreatefromjpeg($src),
-				IMAGETYPE_PNG  => @imagecreatefrompng($src),
-				IMAGETYPE_GIF  => @imagecreatefromgif($src),
-				default        => false
-			};
-			if (!$src_img) return false;
+        if ($per) {
+            $ratio = min($width / $orig_w, $height / $orig_h);
+            $width = (int)($orig_w * $ratio);
+            $height = (int)($orig_h * $ratio);
+        }
 
-			$dst_img = imagecreatetruecolor($width, $height);
-			if ($type == IMAGETYPE_PNG || $type == IMAGETYPE_GIF) {
-				imagealphablending($dst_img, false);
-				imagesavealpha($dst_img, true);
-			}
+        $src_img = match($type) {
+            IMAGETYPE_JPEG => @imagecreatefromjpeg($src),
+            IMAGETYPE_PNG  => @imagecreatefrompng($src),
+            IMAGETYPE_GIF  => @imagecreatefromgif($src),
+            default        => false
+        };
+        if (!$src_img) return false;
 
-			imagecopyresampled($dst_img, $src_img, 0, 0, 0, 0, $width, $height, $orig_w, $orig_h);
-			
-			$success = match($type) {
-				IMAGETYPE_JPEG => imagejpeg($dst_img, $dst, 85),
-				IMAGETYPE_PNG  => imagepng($dst_img, $dst, 6),
-				IMAGETYPE_GIF  => imagegif($dst_img, $dst),
-				default        => false
-			};
+        $dst_img = imagecreatetruecolor($width, $height);
+        if ($type == IMAGETYPE_PNG || $type == IMAGETYPE_GIF) {
+            imagealphablending($dst_img, false);
+            imagesavealpha($dst_img, true);
+        }
 
-			imagedestroy($src_img);
-			imagedestroy($dst_img);
-			return $success;
-	}	
+        imagecopyresampled($dst_img, $src_img, 0, 0, 0, 0, $width, $height, $orig_w, $orig_h);
+        
+        $success = match($type) {
+            IMAGETYPE_JPEG => imagejpeg($dst_img, $dst, 85),
+            IMAGETYPE_PNG  => imagepng($dst_img, $dst, 6),
+            IMAGETYPE_GIF  => imagegif($dst_img, $dst),
+            default        => false
+        };
+
+        imagedestroy($src_img);
+        imagedestroy($dst_img);
+        return $success;
+    }    
+}
+// [ENGINE CORE] Singleton Bridge & DSL Wrapper Functions
+if (!function_exists('file_pq')) {
+    function file_pq() { 
+        static $f; 
+        if (!$f) $f = new FileMaker(); 
+        return $f; 
+    }
 }
 
-/**
- * [PQ Engine Image Matrix] 최신화된 이미지 리사이징/썸네일 생성기
- */
-function file_pq() { static $f; if (!$f) $f = new FileMaker(); return $f; }
+// PHP built-in function 'file()' collision prevention:
+// Use 'file_pq()' or 'file_maker()' for short invocation.
+if (!function_exists('file_maker')) {
+    function file_maker() { 
+        return file_pq(); 
+    }
+}
 ?>

@@ -1,19 +1,19 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.2)
-  * FILENAME : /pq/core/rgx.php
- * COMPONENT : Fluent Regex Builder 
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/core/rgx.php
+ * COMPONENT : PQ Fluent Regex Builder Core Engine
  * =========================================================
  */
 
 class Rgx {
-    protected $target;       // 대상 텍스트
-    protected $patterns = []; // 조립할 패턴 조각들
-    protected $is_not = false; // not() 적용 여부
-    protected $modifiers = ['u']; // 기본 UTF-8 플래그 장착
+    protected $target;        // Target text payload
+    protected $patterns = []; // Assembled pattern fragments
+    protected $is_not = false; // Inverse modifier toggle
+    protected $modifiers = ['u']; // Default UTF-8 modifier flag
     
-    // 패턴 프리셋
+    // Pattern presets
     protected static $presets = [
         'email'      => '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
         'phone'      => '\d{2,3}-\d{3,4}-\d{4}',
@@ -28,7 +28,7 @@ class Rgx {
         'html'       => '<[^>]*>'
     ];
 
-    // 타입별 원시 매핑
+    // Character type mappings
     protected static $types = [
         'eng'    => 'a-zA-Z',
         'kor'    => '가-힣',
@@ -41,13 +41,11 @@ class Rgx {
         'symbol' => '`~!@#\$%\^&\*\(\)_\+=\-\[\]\{\}\\\|;:\'",\.<>\/\?]'
     ];
 
-	public function __construct($target = ''){
+    public function __construct($target = ''){
         $this->target = $target;
     }
 
-    // ==========================================
-    // 1. Builder Methods
-    // ==========================================
+    // --- [1. BUILDER PIPELINE METHODS] ---
     public function pattern($name, $auto_anchor = false) {
         $key = strtolower($name);
         if (isset(self::$presets[$key])) {
@@ -61,7 +59,7 @@ class Rgx {
     }
 
     public function type($names) {
-        //쉼표 분리 멀티 타입 지원 (예: type("eng,int"))
+        // Multi-type support separated by comma (e.g., type("eng,int"))
         $name_list = array_map('trim', explode(',', $names));
         $merged_chars = '';
 
@@ -75,7 +73,7 @@ class Rgx {
         if ($merged_chars !== '') {
             if ($this->is_not) {
                 $this->patterns[] = '[^' . $merged_chars . ']';
-                $this->is_not = false; // 토글 리셋
+                $this->is_not = false; // Reset toggle
             } else {
                 $this->patterns[] = '[' . $merged_chars . ']';
             }
@@ -112,15 +110,13 @@ class Rgx {
         return $this;
     }
 
-    // ==========================================
-    // 2. Option Methods
-    // ==========================================
+    // --- [2. OPTION & MODIFIER METHODS] ---
     public function len($min, $max = null) {
         $last_idx = count($this->patterns) - 1;
         if ($last_idx >= 0) {
             $target = $this->patterns[$last_idx];
             
-            // 그룹핑 격리 안전 가드
+            // Group isolation safety guard
             if (strlen($target) > 1 && !preg_match('/^\[.*\]$/', $target) && !preg_match('/^\(.*\)$/', $target)) {
                 $target = '(?:' . $target . ')';
             }
@@ -145,7 +141,6 @@ class Rgx {
         return $this;
     }
 
-    // 명확한 range 별칭(Alias)으로 전환
     public function upper() {
         return $this->range("A-Z");
     }
@@ -173,22 +168,19 @@ class Rgx {
         return $this;
     }
 
-    // ==========================================
-    // 3. Execute & Debug Methods
-    // ==========================================
+    // --- [3. EXECUTION & DEBUG METHODS] ---
     public function compile() {
         $raw_pattern = implode('', $this->patterns);
         $flags = implode('', $this->modifiers);
         return '/' . $raw_pattern . '/' . $flags;
     }
 
-    // 디버깅 덤프 패널 출력
     public function dump() {
         $regex = $this->compile();
         $is_match = $this->match() ? 'TRUE' : 'FALSE';
         
         echo "<pre style='background:#1e1e1e; color:#00ff66; padding:15px; border-radius:8px; font-family:monospace; line-height:1.5; border:1px solid #333;'>";
-        echo "<b style='color:#ff007f;'>[PQ 8.2 RGX DEBUG GERMAN]</b><br>";
+        echo "<b style='color:#ff007f;'>[PQ RGX DEBUG ENGINE]</b><br>";
         echo "--------------------------------------------------<br>";
         echo "<span style='color:#569cd6;'>Regex:</span>  " . htmlspecialchars($regex) . "<br>";
         echo "<span style='color:#569cd6;'>Target:</span> \"" . htmlspecialchars($this->target) . "\"<br>";
@@ -196,26 +188,28 @@ class Rgx {
         echo "--------------------------------------------------";
         echo "</pre>";
 
-        return $this; // 체이닝 유지를 위해 객체 반환
+        return $this;
     }
-	public function match($target = null){
-		if ($target !== null) {
-			$this->target = $target;
-		}
 
-		$regex = $this->compile();
-		return (bool)preg_match($regex, $this->target);
-	}
-	public function get($target = null){
-		if ($target !== null) {
-			$this->target = $target;
-		}
+    public function match($target = null){
+        if ($target !== null) {
+            $this->target = $target;
+        }
 
-		$regex = $this->compile();
-		preg_match_all($regex, $this->target, $matches);
+        $regex = $this->compile();
+        return (bool)preg_match($regex, $this->target);
+    }
 
-		return $matches[0] ?? [];
-	}
+    public function get($target = null){
+        if ($target !== null) {
+            $this->target = $target;
+        }
+
+        $regex = $this->compile();
+        preg_match_all($regex, $this->target, $matches);
+
+        return $matches[0] ?? [];
+    }
 
     public function replace($replacement) {
         $regex = $this->compile();
@@ -239,14 +233,25 @@ class Rgx {
     public function remove() {
         return $this->clean();
     }
-	public function csv($value, $sep = ','){
-		$sep = preg_quote($sep, '/');
-		$this->patterns[] = '(^|' . $sep . ')' . preg_quote($value, '/') . '(' . $sep . '|$)';
-		return $this;
-	}
+
+    public function csv($value, $sep = ','){
+        $sep = preg_quote($sep, '/');
+        $this->patterns[] = '(^|' . $sep . ')' . preg_quote($value, '/') . '(' . $sep . '|$)';
+        return $this;
+    }
 }
 
-// 글로벌 헬퍼 함수
-function rgx($target) {
-    return new Rgx($target);
+// --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
+
+if (!function_exists('rgx_pq')) {
+    function rgx_pq($target = '') {
+        return new Rgx($target);
+    }
 }
+
+if (!function_exists('rgx')) {
+    function rgx($target = '') {
+        return rgx_pq($target);
+    }
+}
+?>

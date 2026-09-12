@@ -1,14 +1,14 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.5)
- * FILENAME : /pq/core/html.php
- * COMPONENT : XSS 보호 및 태그 제어 빌더 엔진
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/core/html.php
+ * COMPONENT : PQ XSS Protection & Tag Control Builder Engine
  * =========================================================
  */
 
 class PQ_Html {
-    private $allowed_tags = []; // 동적 허용 태그 저장
+    private $allowed_tags = []; // Dynamic allowed tags storage
     private $allowed_iframes = [];
     private $options = [
         'youtube' => false,
@@ -17,7 +17,7 @@ class PQ_Html {
         'style'   => false,
         'special' => false,
         'slash'   => false,
-        'unslash' => false, // [수정] unslash 기본값 추가
+        'unslash' => false,
         'xss'     => false
     ];
     private $content;
@@ -27,7 +27,7 @@ class PQ_Html {
         $this->content = $content; 
     }
 
-    // 체이닝 메서드들
+    // --- [1. CHAINING BUILDER OPTIONS] ---
     public function youtube($status = "on") {
         $this->options['youtube'] = ($status === "on");
 
@@ -65,47 +65,42 @@ class PQ_Html {
         return $this;
     }
 
-    public function __toString() {
-        return $this->run();
-    }
-
-    // [1] 슬래시 추가 옵션
     public function slash($status = "on") { 
         $this->options['slash'] = ($status === "on"); 
         return $this; 
     }
 
-    // [2] 슬래시 제거 옵션
     public function unslash($status = "on") { 
         $this->options['unslash'] = ($status === "on"); 
         return $this; 
     }
 
+    // --- [2. EXECUTION PIPELINE] ---
     public function run() {
         $result = $this->content;
 
-        // 1. 유튜브/미디어 보호 로직
+        // 1. YouTube & Whitelisted Media Protection
         $protection_queue = [];
         
-        // 유튜브 보호
+        // YouTube iframe isolation
         if ($this->options['youtube']) {
             preg_match_all('/<iframe[^>]*src=["\']https?:\/\/(?:www\.)?(?:youtube\.com|youtube-nocookie\.com)\/embed\/[^"\']+["\'][^>]*>.*?<\/iframe>/is', $result, $matches);            
             $protection_queue = array_merge($protection_queue, $matches[0]);
         }
         
-        // allow()에 추가된 태그 보호
+        // Protect dynamically allowed tags via allow()
         foreach ($this->allowed_tags as $tag) {
             $tag = preg_quote($tag, '/');
             preg_match_all('/<' . $tag . '[^>]*>.*?<\/' . $tag . '>/is', $result, $matches);
             $protection_queue = array_merge($protection_queue, $matches[0]);
         }
 
-        // 보호 대상 치환
+        // Replace protected targets with placeholders
         foreach ($protection_queue as $i => $item) {
             $result = str_replace($item, "###PROTECTED_TAG_{$i}###", $result);
         }
 
-        // 2. XSS 및 태그 필터링
+        // 2. XSS & HTML Sanitization
         if ($this->options['xss']) {
             $result = preg_replace('/on[a-z]+\s*=\s*["\'][^"\']*["\']/i', '', $result);
             $result = preg_replace('/on[a-z]+\s*=\s*[^\s>]+/i', '', $result);
@@ -119,14 +114,14 @@ class PQ_Html {
         if (!empty($this->options['slash']))   $result = addslashes($result);
         if (!empty($this->options['unslash'])) $result = stripslashes($result);
 
-        // 3. Iframe/Script/Style 삭제
+        // 3. Purge Unallowed Iframe / Script / Style
         if (!$this->options['iframe'] && !$this->options['youtube']) {
             $result = preg_replace('/<iframe[^>]*>.*?<\/iframe>/i', '', $result);
         }
         if (!$this->options['script']) { $result = preg_replace('/<script[^>]*>.*?<\/script>/i', '', $result); }
         if (!$this->options['style'])  { $result = preg_replace('/<style[^>]*>.*?<\/style>/i', '', $result); }
 
-        // 4. 복원
+        // 4. Restore Protected Tags
         foreach ($protection_queue as $i => $item) {
             $result = str_replace("###PROTECTED_TAG_{$i}###", $item, $result);
         }
@@ -137,9 +132,22 @@ class PQ_Html {
 
         return $result;
     }   
+
+    public function __toString() {
+        return $this->run();
+    }
 }
 
-function html($content = "") {
-    return new PQ_Html($content);
+// [ENGINE CORE] Singleton Bridge & DSL Wrapper Functions
+if (!function_exists('html_pq')) {
+    function html_pq($content = "") {
+        return new PQ_Html($content);
+    }
+}
+
+if (!function_exists('html')) {
+    function html($content = "") {
+        return html_pq($content);
+    }
 }
 ?>

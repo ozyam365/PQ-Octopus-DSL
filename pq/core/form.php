@@ -1,8 +1,8 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.5)
- * FILENAME : /pq/core/form.php  
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/core/form.php  
  * COMPONENT : PQ Pure Raw Form Matrix & Auto-Fallback Type Cast
  * =========================================================
  */
@@ -14,9 +14,12 @@ class FormValue {
     public function __construct($val) { 
         $this->value = $val; 
     }
-	public function __invoke() {
-		return $this->value();
-	}
+
+    public function __invoke() {
+        return $this->value();
+    }
+
+    // --- [1. DATA SANITIZATION PIPELINE] ---
     public function trim() {
         if (is_string($this->value)) {
             $this->value = trim($this->value);
@@ -45,8 +48,8 @@ class FormValue {
         return $this;
     }
 
-    // 🚀 오류 검증 및 예외 처리 메서드 (체이닝 지원)
-    public function error($msg = "잘못된 요청입니다.") {
+    // --- [2. VALIDATION & ERROR HANDLING] ---
+    public function error($msg = "Invalid request.") {
         if ($this->empty()) {
             if (class_exists('http') && method_exists('http', 'msg')) {
                 http::msg($msg)->back();
@@ -58,20 +61,21 @@ class FormValue {
         return $this;
     }
 
-// val()에서 기본값이 들어오는 순간 자동 형변환 적용
+    // --- [3. TYPE CASTING & FALLBACK EVALUATION] ---
     public function val($default = "") {
         $this->default = $default;
         if ($this->empty()) {
             $this->value = $default;
         } else {
-            // 전달받은 $default의 타입에 맞게 내부 $value 즉시 Caster
-            if (is_int($default))   $this->value = (int)$this->value;
-            if (is_float($default)) $this->value = (float)$this->value;
-            if (is_bool($default))  $this->value = (bool)$this->value;
-            if (is_string($default))$this->value = (string)$this->value;
+            // Instant type casting based on default value type
+            if (is_int($default))    $this->value = (int)$this->value;
+            if (is_float($default))  $this->value = (float)$this->value;
+            if (is_bool($default))   $this->value = (bool)$this->value;
+            if (is_string($default)) $this->value = (string)$this->value;
         }
         return $this;
     }
+
     public function empty() {
         if ($this->value === null) return true;
         if (is_string($this->value)) return trim($this->value) === '';
@@ -79,13 +83,12 @@ class FormValue {
         return false;
     }
 
-    // 🚀 최종 수확기 (Deferral Value Evaluator)
+    // Deferral Value Evaluator
     public function value() {
         if ($this->empty()) {
             return $this->default ?? "";
         }
 
-        // val($default)에 전달된 기본값 타입 기반 자동 형변환
         if ($this->default !== null) {
             if (is_int($this->default)) return (int)$this->value;
             if (is_float($this->default)) return (float)$this->value;
@@ -96,7 +99,7 @@ class FormValue {
         return $this->type();
     }
 
-    // 🚀 명시적 캐스팅 메서드
+    // Explicit Type Casting
     public function string() { return (string)$this->value(); }
     public function int() { return (int)$this->value(); }
     public function float() { return (float)$this->value(); }
@@ -110,7 +113,7 @@ class FormValue {
         ) ?? false;
     }
 
-    // 🚀 무한 재귀 방지 - 직접 스칼라 변환 적용 type()
+    // Scalar Auto Detection Type Casting
     public function type() {
         if ($this->empty()) return $this->default;
 
@@ -130,11 +133,11 @@ class FormValue {
 
         return (string)$this->value;
     }
-	// 🚀 XSS 방지 및 HTML 정제 메서드 (체이닝 지원)
+
+    // XSS Prevention & HTML Cleanser
     public function xss($mode = "on") {
         if ($this->value !== null) {
             if ($mode === "on" || $mode === true) {
-                // 단순 특수문자 엔티티 변환
                 if (is_array($this->value)) {
                     array_walk_recursive($this->value, function (&$v) {
                         $v = htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -143,7 +146,6 @@ class FormValue {
                     $this->value = htmlspecialchars((string)$this->value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                 }
             } elseif ($mode === "clean" || $mode === "safe") {
-                // 위험 태그/스크립트 제거 (하단의 html_safe 활용)
                 if (function_exists('html_safe')) {
                     $this->value = html_safe((string)$this->value);
                 }
@@ -151,7 +153,7 @@ class FormValue {
         }
         return $this;
     }
-    // 🚀 엔진 대입 및 출력 시 자동 수확
+
     public function __toString() { 
         return (string)$this->value(); 
     }
@@ -200,6 +202,7 @@ class FormMaker {
     }
 }
 
+// [ENGINE CORE] Global Sanitization Helper
 if (!function_exists("html_safe")) {
     function html_safe($html) {
         $html = preg_replace('/<(script|iframe|object|embed|style|link)[^>]*?>.*?<\/\1>/si', '', $html);
@@ -208,11 +211,18 @@ if (!function_exists("html_safe")) {
     }
 }
 
+// [ENGINE CORE] Singleton Bridge & DSL Wrappers
 if (!function_exists("form")) {
     function form(){
         static $f = null;
         if (!$f) $f = new FormMaker();
         return $f;
+    }
+}
+
+if (!function_exists("form_pq")) {
+    function form_pq(){
+        return form();
     }
 }
 ?>

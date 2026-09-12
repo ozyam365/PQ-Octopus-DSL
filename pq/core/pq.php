@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.6)
- * FILENAME : /pq/core/pq.php
- * COMPONENT : PQ System Utilities & Core Namespace
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/core/pq.php
+ * COMPONENT : PQ System Utilities & Core Namespace Engine
  * =========================================================
  */
 
@@ -18,8 +18,8 @@ class PQCore {
     }
 
     /**
-     * 🐙 PQ DSL 플러그인 모듈 활성화 API
-     * 사용법: pq.use("chat") 또는 pq.use("chat").use("api") 또는 pq.use(["chat", "api"])
+     * PQ DSL Plugin Loader Pipeline
+     * Usage: pq().use("chat") or pq().use("chat").use("api") or pq().use(["chat", "api"])
      */
     public function use($plugin_name) {
         if (is_array($plugin_name)) {
@@ -29,7 +29,7 @@ class PQCore {
             return $this;
         }
 
-        // 내부 실제 로딩 래퍼 호출
+        // Internal plugin loader invocation
         if (function_exists('plugin_load')) {
             plugin_load($plugin_name);
         } else {
@@ -39,16 +39,19 @@ class PQCore {
             }
         }
 
-        // 연속 체이닝을 위해 자기 자신($this) 반환
         return $this;
     }
 
-    // 🚀 [1] 예외 던지기
+    /**
+     * Exception thrower
+     */
     public function throw($msg, $code = 0) {
         throw new \Exception($msg, $code);
     }
 
-    // 🚀 [2] 데이터 예쁜 덤프 출력 (Print)
+    /**
+     * Pretty print data dumper
+     */
     public function print(...$args) {
         foreach($args as $v){
             if (is_scalar($v) || $v === null) { 
@@ -63,39 +66,57 @@ class PQCore {
     }
 
     public static function now() {
-        return PQDate::now();
+        if (class_exists('PQDate') && method_exists('PQDate', 'now')) {
+            return PQDate::now();
+        }
+        return date('Y-m-d H:i:s');
     }
 
     public static function date($time = "now") {
-        return new PQDate($time);
+        if (class_exists('PQDate')) {
+            return new PQDate($time);
+        }
+        return date('Y-m-d H:i:s', is_numeric($time) ? $time : strtotime($time));
     }
 
-    // 🚀 [3] Dump & Die (출력 후 즉시 프로세스 종료)
+    /**
+     * Dump & Die (Prints formatted data and exits execution)
+     */
     public function dd(...$args) {
         $this->print(...$args);
         exit;
     }
 
-    // 🚀 [4] 프로세스 즉시 종료
+    /**
+     * Process termination
+     */
     public function exit($msg = '') {
         if ($msg !== '') echo $msg;
         exit;
     }
 
-    // 🚀 [5] 타임스탬프
+    /**
+     * System timestamp retriever
+     */
     public function time() {
         return time();
     }
 }
 
-// 🚀 글로벌 네임스페이스 헬퍼
-if (!function_exists('pq')) {
-    function pq() {
+// --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
+
+if (!function_exists('pq_core')) {
+    function pq_core() {
         return PQCore::getInstance();
     }
 }
 
-// 🚀 runner.php 및 하위 호환성을 위한 전역 출력 헬퍼
+if (!function_exists('pq')) {
+    function pq() {
+        return pq_core();
+    }
+}
+
 if (!function_exists('pq_print')) {
     function pq_print(...$args){
         pq()->print(...$args);

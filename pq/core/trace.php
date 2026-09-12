@@ -1,37 +1,42 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.2)
- * FILENAME : /pq/core/trace.php 
- * COMPONENT : PQ trace 
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/core/trace.php 
+ * COMPONENT : PQ Trace Debugger & Execution Logger Core Engine
  * =========================================================
  */
+
 class Trace {
     public static $logs = [];
     private static $count = 0, $start = null, $is_active = false, $rendered = false;
 
+    // --- [1. DEBUGGER INITIALIZATION] ---
     public static function on() {
         self::$is_active = true;
         self::$start = self::$start ?? microtime(true);
         error_reporting(E_ALL);
         ini_set('display_errors', 1);
-        self::add('OK', 'PQ Debugger Online ', 1);
+        self::add('OK', 'PQ Debugger Online', 1);
     }
-	public static function debug($var, $title = "DEBUG") {
-		if (!self::$is_active) return;
 
-		ob_start();
+    public static function debug($var, $title = "DEBUG") {
+        if (!self::$is_active) return;
 
-		if (is_scalar($var) || $var === null) {
-			var_dump($var);
-		} else {
-			print_r($var);
-		}
+        ob_start();
 
-		$out = ob_get_clean();
+        if (is_scalar($var) || $var === null) {
+            var_dump($var);
+        } else {
+            print_r($var);
+        }
 
-		self::add($title, $out, 2);
-	}
+        $out = ob_get_clean();
+
+        self::add($title, $out, 2);
+    }
+
+    // --- [2. LOGGING & TRACE RECORDING] ---
     public static function add($type, $msg, $depth = 1) {
         if (!self::$is_active) return;
         if (!self::$start) self::$start = microtime(true);
@@ -53,17 +58,20 @@ class Trace {
             'line' => $line
         ];
 
-        //긴급 에러 발생 시 즉각 현장 보고
+        // Emergency error output for critical errors
         if ($type === 'ERROR') {
             echo "<div style='background:#450a0a; color:#fca5a5; padding:10px; border:1px solid #ef4444; margin:5px; font-family:monospace; border-radius:4px; font-size:12px; z-index:999999; position:relative;'>
-                    <b> [긴급]</b> " . htmlspecialchars($msg_str, ENT_QUOTES, 'UTF-8') . "
+                    <b>[EMERGENCY ERROR]</b> " . htmlspecialchars($msg_str, ENT_QUOTES, 'UTF-8') . "
                   </div>";
         }
     }
 
-    //  [복구완료] DB SQL 추적 메서드
-    public static function sql($query) { self::add('SQL', $query, 2); }
+    /** Log SQL Execution Queries */
+    public static function sql($query) { 
+        self::add('SQL', $query, 2); 
+    }
 
+    // --- [3. UI TRAY RENDERER] ---
     public static function out() {
         if (self::$rendered || !self::$is_active || empty(self::$logs)) return; 
         
@@ -76,14 +84,13 @@ class Trace {
         echo "
         <div id='pq-trace-tray' style='position:fixed; bottom:0; left:0; width:100%; height:40px; background:#000000; border-top:2px solid #facc15; transition:height 0.4s; overflow:hidden; z-index:999999; box-shadow:0 -5px 15px rgba(0,0,0,0.8);'>
             <div id='pq-trace-bar' style='height:40px; display:flex; align-items:center; padding:0 20px; cursor:pointer; color:#facc15; font-weight:bold; border-bottom:1px solid #333;'>
-                <span style='font-size:12px'>[ Trace System ]  &nbsp;<font color='#21F50A'>" . count(self::$logs) . "</font>&nbsp;"." Log </span>
+                <span style='font-size:12px'>[ Trace System ] &nbsp;<font color='#21F50A'>" . count(self::$logs) . "</font>&nbsp;"." Log </span>
                 <span id='pq-toggle-icon' style='margin-left:auto; font-size:9px'>▲</span>
             </div>
             <div style='height:calc(100% - 40px); overflow-y:auto; padding:20px; background:#0a0a0a; color:#e0e0e0; font-family:Consolas, monospace; font-size:13px;'>";
         
         foreach (self::$logs as $log) {
             $t = number_format(($log['time'] - self::$start), 4);
-            // 💡 [복구완료] SQL 타입은 노란색 강조
             $type_color = ($log['type'] === 'SQL') ? '#38bdf8' : '#facc15';
             
             echo "<div style='border-bottom:1px solid #222; padding:8px 0; color:#ddd;'>
@@ -105,12 +112,32 @@ class Trace {
     }
 }
 
+// Auto-register trace rendering at shutdown
 register_shutdown_function(['Trace', 'out']);
 
-// 함수 복구
-if (!function_exists('trace')) { function trace($t, $m) { Trace::add($t, $m, 2); } }
-if (!function_exists('trace_on')) { function trace_on() { Trace::on(); } }
-function debug($var, $title = "DEBUG") {
-    Trace::debug($var, $title);
+// --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
+
+if (!function_exists('trace_pq')) {
+    function trace_pq($t, $m) {
+        Trace::add($t, $m, 2);
+    }
+}
+
+if (!function_exists('trace')) { 
+    function trace($t, $m) { 
+        trace_pq($t, $m); 
+    } 
+}
+
+if (!function_exists('trace_on')) { 
+    function trace_on() { 
+        Trace::on(); 
+    } 
+}
+
+if (!function_exists('debug')) {
+    function debug($var, $title = "DEBUG") {
+        Trace::debug($var, $title);
+    }
 }
 ?>

@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.5)
- * FILENAME : /pq/core/session.php
- * COMPONENT : PQ Engine Session Matrix Core (Final Slim)
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/core/session.php
+ * COMPONENT : PQ Engine Session Matrix Core Engine
  * =========================================================
  */
 
@@ -21,28 +21,31 @@ class PQSession {
         return !empty($_SESSION[$scope]);
     }
 
-	public function login($user, $scope = 'user') {
-    $this->init();
-    session_regenerate_id(true);
-    
-    // 데이터를 강제로 객체화하지 않고, 넘겨받은 타입 그대로 저장합니다.
-    $_SESSION[$scope] = $user; 
-    
-    return $this;
-}
-	public function logout($scope="user"){
-		return $this->destroy();
-	}
-	public function has($key) {
-		$this->init();
-		return isset($_SESSION[$key]);
-	}	
-    // 2. 인증 확인 (true/false)
+    // --- [1. AUTHENTICATION PIPELINE] ---
+    public function login($user, $scope = 'user') {
+        $this->init();
+        session_regenerate_id(true);
+        
+        // Store raw user payload without forcing object transformation
+        $_SESSION[$scope] = $user; 
+        
+        return $this;
+    }
+
+    public function logout($scope = "user") {
+        return $this->destroy();
+    }
+
+    public function has($key) {
+        $this->init();
+        return isset($_SESSION[$key]);
+    }   
+
     public function auth($scope = 'user') {
         return $this->check($scope);
     }
 
-    // 3. 보호 (실패 시 리다이렉트)
+    // Guard route and redirect on authentication failure
     public function only($path = "/login", $scope = 'user') {
         if (!$this->check($scope)) {
             header("Location: $path");
@@ -51,29 +54,34 @@ class PQSession {
         return $this;
     }
 
-	public function group($scope = 'user') {
-		$this->init();
-		return $_SESSION[$scope] ?? null; // 가공 없이 그대로 반환
-	}
-    // 5. 데이터 조작
+    public function group($scope = 'user') {
+        $this->init();
+        return $_SESSION[$scope] ?? null;
+    }
+
+    // --- [2. DATA MANIPULATION PIPELINE] ---
     public function set($k, $v) {
         $this->init();
         $_SESSION[$k] = $v;
         return $this;
     }
+
     public function get($k, $def = null) {
         $this->init();
         return $_SESSION[$k] ?? $def;
     }
-	public function drop($key){
-		$this->init();
-		unset($_SESSION[$key]);
-		return $this;
-	}
-	public function unset($key) {
-		return $this->drop($key);
-	}	
-    // 6. 증거 인멸 및 세션 파괴
+
+    public function drop($key) {
+        $this->init();
+        unset($_SESSION[$key]);
+        return $this;
+    }
+
+    public function unset($key) {
+        return $this->drop($key);
+    }   
+
+    // --- [3. SESSION DESTRUCTION & COOKIE PURGE] ---
     public function destroy() {
         $this->init();
         $_SESSION = [];
@@ -87,9 +95,8 @@ class PQSession {
     }
 }
 
-/**
- * SESSION 헬퍼 함수
- */
+// --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
+
 if (!function_exists('session_pq')) {
     function session_pq() {
         static $inst = null;
@@ -98,4 +105,9 @@ if (!function_exists('session_pq')) {
     }
 }
 
+if (!function_exists('session')) {
+    function session() {
+        return session_pq();
+    }
+}
 ?>

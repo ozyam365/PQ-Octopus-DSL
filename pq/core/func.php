@@ -1,12 +1,13 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.2)
- * FILENAME : /pq/core/func.php  
- * COMPONENT : PQ Core  필요함수집합
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/core/func.php  
+ * COMPONENT : PQ Core Helper Functions & Collection Matrix
  * =========================================================
  */
 
+// --- [1. DATA COLLECTION MATRIX] ---
 class PQData extends ArrayObject {
     public function __get($n) { return $this[$n] ?? null; }
 
@@ -15,6 +16,7 @@ class PQData extends ArrayObject {
         $url_parts = parse_url($_SERVER['REQUEST_URI'] ?? '/');
         return ($url_parts['path'] ?? '/') . ($data ? "?" . http_build_query($data) : "");
     }
+
     public function url($add = []) { return $this->pagenavi($add); }
 
     public function filled($key = null) {
@@ -42,16 +44,30 @@ class PQData extends ArrayObject {
     public function __toString() { return json_encode($this->getArrayCopy(), JSON_UNESCAPED_UNICODE); }
 }
 
-function pq_data($a) { return new PQData((array)$a); }
+// [ENGINE CORE] Data Wrapper Functions
+function pq_data($a) { 
+    return new PQData((array)$a); 
+}
 
+// [ENGINE CORE] Safe Fallback Bridge for ret()
+if (!function_exists('ret')) {
+    function ret($data = null) {
+        if (function_exists('ret_pq')) {
+            return ret_pq($data);
+        }
+        return pq_data($data);
+    }
+}
+
+// --- [2. OUTPUT & SANITIZATION HELPERS] ---
 /**
- * 엔진의 자동 판단을 없애고, 개발자가 명시적으로 호출하게 합니다.
+ * Explicit sanitization helpers to allow explicit developer control
  */
 function pq_safe($v) { return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 function pq_attr($v) { return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
-function pq_html($v) { return (string)$v; } // 정화 없이 원본 출력
+function pq_html($v) { return (string)$v; } // Raw output without sanitization
 
-
+// --- [3. ARRAY EVALUATION ENGINE] ---
 function pq_where($arr, $cond) {
     if ($arr instanceof PQData) $arr = $arr->getArrayCopy();
     if (!is_array($arr)) return pq_data([]);
@@ -70,8 +86,8 @@ function pq_where($arr, $cond) {
             '>='  => $t >= $val,
             '<='  => $t <= $val,
             '==', '=' => $t == $val,
-			'!=' => $t != $val,
-			'<>' => $t != $val,			
+            '!='  => $t != $val,
+            '<>'  => $t != $val,         
             default => false
         };
     });
@@ -82,10 +98,12 @@ function pq_pluck($arr, $field) {
     if ($arr instanceof PQData) $arr = $arr->getArrayCopy();
     return pq_data(array_column($arr, $field));
 }
+
+// --- [4. RESPONSE OUTPUT FILTER] ---
 function pq_output_filter($html) {
-    // 1. 단축 경로 치환
+    // 1. Path alias replacement
     $html = str_replace('/path/', PQ_BASE . '/', $html);   
-    // 2. (추후 확장) HTML Minify나 debug 제거 등 추가 가능   
+    // 2. Future expansion space (HTML Minification, Debug stripping, etc.)   
     return $html;
 }
 ?>

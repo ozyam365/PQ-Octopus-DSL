@@ -1,7 +1,7 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.5)
+ * PQ VERSION (BETA VERSION 9.1.7)
  * FILENAME  : /pq/core/pin.php  
  * COMPONENT : PQ Core Pin (Variable Binding & Data Processing)
  * =========================================================
@@ -9,15 +9,15 @@
 
 class PQPin {
     /**
-     * 바인딩된 변수들의 참조(Reference) 리스트
+     * Reference list of bound variables
      * @var array
      */
     private array $refs = [];
 
     /**
-     * [Step 1] 타겟 변수들의 참조 메모리 주소를 일괄 바인딩
+     * [Step 1] Batch bind memory reference addresses of target variables
      * 
-     * @param array $vars 참조 변수 배열
+     * @param array $vars Referenced variable array
      * @return self
      */
     public function bind(array &$vars): self {
@@ -29,21 +29,22 @@ class PQPin {
     }
 
     /**
-     * [Action] .val(): 바인딩된 모든 변수에 값 일괄 할당
+     * [Action] .val(): Batch assign value to all bound variables
      * 
-     * @param mixed $value 할당할 값
+     * @param mixed $value Value to assign
      * @return mixed
      */
-	public function val(mixed $value): mixed {
-		foreach ($this->refs as &$var) {
-			$var = $value; // 기존에 값이 있든 없든 무조건 $value로 강제 초기화!
-		}
-		return $value;
-	}
+    public function val(mixed $value): mixed {
+        foreach ($this->refs as &$var) {
+            $var = $value; // Force reset to $value regardless of prior state
+        }
+        return $value;
+    }
+
     /**
-     * [Action] .int(): 모든 변수를 정수형(Integer)으로 일괄 캐스팅
+     * [Action] .int(): Batch cast all bound variables to integer
      * 
-     * @param int|null $default 값 변경 실패 시 기본값 (null 설정 시 기존 유지)
+     * @param int|null $default Fallback value on failure (null preserves existing)
      * @return self
      */
     public function int(?int $default = 0): self {
@@ -58,9 +59,9 @@ class PQPin {
     }
 
     /**
-     * [Action] .string(): 모든 변수를 문자열(String)로 강제 변환
+     * [Action] .string(): Force convert all bound variables to string
      * 
-     * @param string $default 기본값
+     * @param string $default Fallback value
      * @return self
      */
     public function string(string $default = ""): self {
@@ -75,7 +76,7 @@ class PQPin {
     }
 
     /**
-     * [Action] .bool(): 모든 변수를 불리언(Boolean) 타입으로 변환
+     * [Action] .bool(): Convert all bound variables to boolean type
      * 
      * @return self
      */
@@ -87,7 +88,7 @@ class PQPin {
     }
 
     /**
-     * [Action] .array(): 모든 변수를 배열(Array) 타입으로 일괄 변환
+     * [Action] .array(): Batch convert all bound variables to array type
      * 
      * @return self
      */
@@ -101,7 +102,7 @@ class PQPin {
     }
 
     /**
-     * [Action] .object(): 모든 변수를 객체(stdClass) 타입으로 일괄 변환
+     * [Action] .object(): Batch convert all bound variables to object (stdClass) type
      * 
      * @return self
      */
@@ -115,7 +116,7 @@ class PQPin {
     }
 
     /**
-     * [Action] .clean(): 문자열 공백(trim) 및 좌우 연속 공백 일괄 정제
+     * [Action] .clean(): Trim whitespace on string variables
      * 
      * @return self
      */
@@ -129,7 +130,7 @@ class PQPin {
     }
 
     /**
-     * [Action] .null(): 빈 문자열("") 또는 빈 배열([]) 상태의 변수를 null로 변환
+     * [Action] .null(): Convert empty strings ("") or empty arrays ([]) to null
      * 
      * @return self
      */
@@ -143,14 +144,18 @@ class PQPin {
     }
 }
 
-/**
- * 🚀 [Global Helper] pin()
- * 가변 참조(&...$vars)를 이용해 스크립트 어디서든 변수를 고정하여 체이닝을 시작합니다.
- * 
- * @param mixed ...$vars
- * @return PQPin
- */
-function pin(&...$vars): PQPin {
-    $inst = new PQPin();
-    return $inst->bind($vars);
+// --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
+
+if (!function_exists('pin_pq')) {
+    function pin_pq(&...$vars): PQPin {
+        $inst = new PQPin();
+        return $inst->bind($vars);
+    }
 }
+
+if (!function_exists('pin')) {
+    function pin(&...$vars): PQPin {
+        return pin_pq(...$vars);
+    }
+}
+?>

@@ -1,7 +1,7 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.5)
+ * PQ VERSION (BETA VERSION 9.1.7)
  * FILENAME  : /pq/core/ret.php  
  * COMPONENT : PQ Core Ret (Data Type Return & Conversion)
  * =========================================================
@@ -15,8 +15,7 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
     }
 
     /**
-     * 🚀 [핵심] foreach($list as $row) / repeat() 순회 지원 (IteratorAggregate 구현)
-     * - db.list() 결과를 .array() 없이 곧바로 repeat() / foreach 돌릴 수 있습니다.
+     * Traversal support for foreach($list as $row) / repeat() (IteratorAggregate implementation)
      */
     public function getIterator(): Traversable {
         $arr = $this->array();
@@ -24,7 +23,7 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
     }
 
     /**
-     * 🚀 [핵심] $list[0], $list['key'] 배열식 접근 지원 (ArrayAccess 구현)
+     * Array access support ($list[0], $list['key']) (ArrayAccess implementation)
      */
     public function offsetExists(mixed $offset): bool {
         return isset($this->array()[$offset]);
@@ -48,14 +47,14 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
     }
 
     /**
-     * 🚀 [핵심] count(#list) 대응 지원 (Countable 구현)
+     * Element counting support (Countable implementation)
      */
     public function count(): int {
         return count($this->array());
     }
 
     /**
-     * 🚀 [매직 메서드] 모든 리턴 경로를 명확한 변수($val) 참조로 처리하여 PHP 8+ Notice 완전 차단
+     * Magic Getter - Handles property access by reference to prevent PHP 8+ Notices
      */
     public function &__get(string $name): mixed {
         $null = null;
@@ -77,7 +76,7 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
     }
 
     /**
-     * 🚀 [매직 메서드] $ret->prop = $val 속성 직접 할당
+     * Magic Setter - Direct property assignment ($ret->prop = $val)
      */
     public function __set(string $name, mixed $value): void {
         if (is_object($this->data)) {
@@ -90,7 +89,7 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
     }
 
     /**
-     * 🚀 [매직 메서드] isset($ret->prop) 체크
+     * Magic Isset check (isset($ret->prop))
      */
     public function __isset(string $name): bool {
         if (is_object($this->data)) {
@@ -101,21 +100,23 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
         }
         return false;
     }
-/**
-     * 🚀 [매직 메서드] 메서드 오폭 방어 (__call)
+
+    /**
+     * Magic Call guard against invalid method invocations
      */
     public function __call(string $name, array $arguments): mixed {
         return null;
     }
 
     /**
-     * 🚀 [매직 메서드] 뷰/템플릿 자동 문자열 출력 대응 (__toString)
+     * String conversion for view/template auto-output
      */
     public function __toString(): string {
         return is_scalar($this->data) ? (string)$this->data : $this->json();
     }
+
     /**
-     * 🚀 [데이터 체크] .has(): 데이터 존재 여부 검사
+     * Data availability inspector
      */
     public function has(): bool {
         if (is_null($this->data)) return false;
@@ -125,7 +126,7 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
     }
 
     /**
-     * [Step 1] 데이터 바인딩 진입점
+     * Data binding entry point
      */
     public function data(mixed $data): self {
         $this->data = $data;
@@ -133,7 +134,7 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
     }
 
     /**
-     * [Action] .array(): 연관 배열 반환
+     * Convert and return data as associative array
      */
     public function array(): array {
         if (is_null($this->data)) return [];
@@ -153,7 +154,7 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
     }
 
     /**
-     * [Action] .object(): 객체(stdClass) 반환
+     * Convert and return data as stdClass object
      */
     public function object(): object {
         if (is_null($this->data)) return (object)[];
@@ -169,61 +170,67 @@ class PQRet implements IteratorAggregate, ArrayAccess, Countable {
     }
 
     /**
-     * [Action] .json(): JSON 문자열 반환
+     * Convert and return data as JSON string
      */
     public function json(int $flags = JSON_UNESCAPED_UNICODE): string {
         return json_encode($this->data, $flags);
     }
 
     /**
-     * [Action] .int(): 정수형 반환
+     * Convert and return data as integer
      */
     public function int(int $default = 0): int {
         return is_numeric($this->data) ? (int)$this->data : $default;
     }
 
     /**
-     * [Action] .string(): 문자열 반환
+     * Convert and return data as string
      */
     public function string(string $default = ""): string {
         return is_null($this->data) ? $default : (string)$this->data;
     }
-	/**
-	 * 🚀 DB 레코드 객체용 .attr() 데이터 접근자 (최종 정돈)
-	 */
-	public function attr($key = null, ...$args) {
-		// 1. 인자가 없으면 raw 데이터 자체를 반환 (전체 추출은 .all()이나 .array() 권장)
-		if ($key === null) {
-			return $this->data;
-		}
 
-		// 2. Getter (값 읽기)
-		if (count($args) === 0) {
-			if (is_array($this->data)) {
-				return $this->data[$key] ?? null;
-			}
-			if (is_object($this->data)) {
-				return $this->data->{$key} ?? null;
-			}
-			return isset($this->{$key}) ? $this->{$key} : null;
-		}
+    /**
+     * Universal attribute accessor for DB record objects
+     */
+    public function attr($key = null, ...$args) {
+        if ($key === null) {
+            return $this->data;
+        }
 
-		// 3. Setter (값 저장)
-		if (is_array($this->data)) {
-			$this->data[$key] = $args[0];
-		} elseif (is_object($this->data)) {
-			$this->data->{$key} = $args[0];
-		} else {
-			$this->{$key} = $args[0];
-		}
-		return $this;
-	}
+        // Getter
+        if (count($args) === 0) {
+            if (is_array($this->data)) {
+                return $this->data[$key] ?? null;
+            }
+            if (is_object($this->data)) {
+                return $this->data->{$key} ?? null;
+            }
+            return isset($this->{$key}) ? $this->{$key} : null;
+        }
+
+        // Setter
+        if (is_array($this->data)) {
+            $this->data[$key] = $args[0];
+        } elseif (is_object($this->data)) {
+            $this->data->{$key} = $args[0];
+        } else {
+            $this->{$key} = $args[0];
+        }
+        return $this;
+    }
 } 
 
-/**
- * 🚀 [Global Helper] ret()
- */
-function ret(mixed $data = null): PQRet {
-    return new PQRet($data);
+// [ENGINE CORE] Singleton Bridge & DSL Wrapper Functions
+if (!function_exists('ret_pq')) {
+    function ret_pq(mixed $data = null): PQRet {
+        return new PQRet($data);
+    }
+}
+
+if (!function_exists('ret')) {
+    function ret(mixed $data = null): PQRet {
+        return ret_pq($data);
+    }
 }
 ?>

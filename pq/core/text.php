@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.5)
+ * PQ VERSION (BETA VERSION 9.1.7)
  * FILENAME  : /pq/core/text.php 
- * COMPONENT : PQ Engine Text Matrix Core
+ * COMPONENT : PQ Engine Text Matrix Core Engine
  * =========================================================
  */
 
@@ -13,12 +13,10 @@ class PQText {
     private string $on_mode = 'all';
     private bool $is_cut = false;
 
-    // =========================================================
-    // [1] 초기화 및 기본 설정
-    // =========================================================
+    // --- [1. INITIALIZATION & CONFIGURATION] ---
 
     /**
-     * Target 지정 및 내부 상태 리셋
+     * Set target payload and reset internal state
      */
     public function target(mixed $s): self {
         $this->target_val = ($s === null) ? '' : (string)$s;
@@ -29,7 +27,7 @@ class PQText {
     }
 
     /**
-     * 정규식 조건 설정
+     * Set regex filter conditions
      */
     public function filter(string $cond): self {
         $p = str_replace(['~', ','], ['-', ''], $cond);
@@ -41,16 +39,14 @@ class PQText {
     }
 
     /**
-     * 대소문자 모드 전환
+     * Case transformation modes
      */
     public function lower(): self { $this->on_mode = 'lower'; return $this; }
     public function upper(): self { $this->on_mode = 'upper'; return $this; }
 
-    // =========================================================
-    // [2] 이스케이프 및 문자열 치환 / 정제
-    // =========================================================
+    // --- [2. ESCAPING, REPLACEMENT & SANITIZATION] ---
 
-    /** DB 슬래시 추가 */
+    /** Add slashes for DB operations */
     public function slash(): self {
         if ($this->target_val !== '') {
             $this->target_val = addslashes($this->target_val);
@@ -58,7 +54,7 @@ class PQText {
         return $this;
     }
 
-    /** DB 슬래시 제거 */
+    /** Strip slashes */
     public function unslash(): self {
         if ($this->target_val !== '') {
             $this->target_val = stripslashes($this->target_val);
@@ -66,7 +62,7 @@ class PQText {
         return $this;
     }
 
-    /** HTML 태그 전체 제거 */
+    /** Strip all HTML tags */
     public function strip(): self {
         if ($this->target_val !== '') {
             $this->target_val = strip_tags($this->target_val);
@@ -74,7 +70,7 @@ class PQText {
         return $this;
     }
 
-    /** 특수문자 전체 이스케이프 (htmlspecialchars) */
+    /** Full special character escaping (htmlspecialchars) */
     public function special(): self {
         if ($this->target_val !== '') {
             $this->target_val = htmlspecialchars($this->target_val, ENT_QUOTES, 'UTF-8');
@@ -82,7 +78,7 @@ class PQText {
         return $this;
     }
 
-    /** < 및 > 문자만 핀포인트 변환 */
+    /** Pinpoint conversion for < and > symbols */
     public function ltgt(): self {
         if ($this->target_val !== '') {
             $this->target_val = str_replace(['<', '>'], ['&lt;', '&gt;'], $this->target_val);
@@ -90,7 +86,7 @@ class PQText {
         return $this;
     }
 
-    /** 줄바꿈 <br /> 변환 */
+    /** Convert line breaks to <br /> */
     public function nl2br(): self {
         if ($this->target_val !== '') {
             $this->target_val = nl2br($this->target_val);
@@ -98,21 +94,19 @@ class PQText {
         return $this;
     }
 
-    /** 좌우 공백 제거 */
+    /** Trim whitespace */
     public function trim(): self {
         return $this->target(trim($this->target_val));
     }
 
-    /** 단순 문자열 치환 */
+    /** String replacement */
     public function change(mixed $search, mixed $replace): self {
         return $this->target(str_replace($search, $replace, $this->target_val));
     }
 
-    // =========================================================
-    // [3] 자르기 (Cut) 및 포맷팅 (Formatting)
-    // =========================================================
+    // --- [3. TRUNCATION & FORMATTING] ---
 
-    /** 일반 문자열 자르기 */
+    /** Standard string truncation */
     public function cut(int $length): self {
         if (mb_strlen($this->target_val, 'UTF-8') <= $length) {
             $this->is_cut = false;
@@ -123,7 +117,7 @@ class PQText {
         return $this;
     }
 
-    /** HTML 태그 보존 문자열 자르기 */
+    /** HTML-safe tag-preserving truncation */
     public function hcut(int $length): self {
         $text = $this->target_val;
         if (mb_strlen(preg_replace('/<[^>]*>/', '', $text), 'UTF-8') <= $length) {
@@ -161,7 +155,7 @@ class PQText {
         return $this;
     }
 
-    /** 잘린 문자열 뒤 접미사 붙이기 */
+    /** Append suffix to truncated string */
     public function suffix(string $str = '...'): string {
         if ($this->is_cut) {
             $this->target_val .= $str;
@@ -169,7 +163,7 @@ class PQText {
         return $this->apply_mode($this->target_val);
     }
 
-    /** 키워드 하이라이팅 */
+    /** Keyword highlighting */
     public function mark(string $keyword, string $wrapper = '<mark class="pq-mark">$1</mark>'): self {
         if (empty($keyword) || empty($this->target_val)) {
             return $this;
@@ -179,7 +173,7 @@ class PQText {
         return $this;
     }
 
-    /** 통화 금액 포맷 (1,000) */
+    /** Currency amount formatting (1,000) */
     public function money(): self {
         $num = preg_replace('/[^\d\.\-]/', '', $this->target_val);
         $parts = explode('.', $num === '' ? '0' : $num);
@@ -187,7 +181,7 @@ class PQText {
         return $this->target(implode('.', $parts));
     }
 
-    /** 전화번호 포맷 (010-0000-0000) */
+    /** Phone number formatting (010-0000-0000) */
     public function phone(): self {
         $n = preg_replace('/[^\d]/', '', $this->target_val);
         $l = strlen($n);
@@ -201,27 +195,25 @@ class PQText {
         return $this->target($r);
     }
 
-    /** 파일 확장자 추출 */
+    /** File extension extractor */
     public function ext(): string {
         return $this->apply_mode(strtolower(pathinfo($this->target_val, PATHINFO_EXTENSION)));
     }
 
-    // =========================================================
-    // [4] 정규식 검색 및 필터링
-    // =========================================================
+    // --- [4. REGEX SEARCH & FILTERING] ---
 
-    /** 허용 범위 외 문자 제거 */
+    /** Strip characters outside allowed range */
     public function clean(): string {
         return $this->apply_mode(preg_replace("/[^{$this->rgx_cond}]/u", '', $this->target_val));
     }
 
-    /** 허용 범위 내 문자만 추출 */
+    /** Extract characters within allowed range */
     public function find(): string {
         preg_match_all("/[{$this->rgx_cond}]/u", $this->target_val, $matches);
         return $this->apply_mode(implode('', $matches[0] ?? []));
     }
 
-    /** 패턴 일치 항목 전체 추출 */
+    /** Extract all pattern matching occurrences */
     public function find_all(string $pattern): array {
         if (empty($this->target_val) || empty($pattern)) return [];
         if (substr($pattern, 0, 1) !== substr($pattern, -1)) {
@@ -234,17 +226,17 @@ class PQText {
         return [];
     }
 
-    /** 정규식 매칭 부분 치환 */
+    /** Replace regex matched portions */
     public function replace(string $char): string {
         return $this->apply_mode(preg_replace("/[{$this->rgx_cond}]/u", $char, $this->target_val));
     }
 
-    /** 정규식 매칭 개수 */
+    /** Count regex matches */
     public function count(): int {
         return (int)preg_match_all("/[{$this->rgx_cond}]/u", $this->target_val, $matches);
     }
 
-    /** 첫 번째 / 마지막 매칭 글자 추출 */
+    /** Extract first or last matched character */
     public function first(): string {
         preg_match("/[{$this->rgx_cond}]/u", $this->target_val, $match);
         return isset($match[0]) ? $this->apply_mode($match[0]) : '';
@@ -255,9 +247,7 @@ class PQText {
         return (!empty($matches[0])) ? $this->apply_mode(end($matches[0])) : '';
     }
 
-    // =========================================================
-    // [5] 인코딩, 암호화 및 유틸리티
-    // =========================================================
+    // --- [5. ENCODING, ENCRYPTION & UTILITIES] ---
 
     public function decode(string $from = "CP949", string $to = "UTF-8"): self {
         $decoded = rawurldecode($this->target_val);
@@ -291,16 +281,14 @@ class PQText {
         return openssl_decrypt(substr($d, 16), 'AES-256-CBC', hash('sha256', APP_SECRET, true), OPENSSL_RAW_DATA, substr($d, 0, 16));
     }
 
-    /** 고유 식별자 키 생성 */
+    /** Generate unique identifier key */
     public function random(string $prefix = 'CRT', int $bytes = 3): string {
         $microTime = str_replace('.', '', microtime(true));
         $randomBytes = bin2hex(random_bytes($bytes));
         return strtoupper($prefix . '_' . $microTime . $randomBytes);
     }
 
-    // =========================================================
-    // [6] 최종 결과 출력 및 상태 검사
-    // =========================================================
+    // --- [6. OUTPUT EVALUATION & INSPECTION] ---
 
     public function len(): int {
         return mb_strlen($this->target_val, 'UTF-8');
@@ -328,11 +316,18 @@ class PQText {
     }
 }
 
-/**
- * 🚀 [Global Helper] text()
- */
-function text(mixed $str = ""): PQText {
-    $inst = new PQText();
-    return $inst->target($str);
+// --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
+
+if (!function_exists('text_pq')) {
+    function text_pq(mixed $str = ""): PQText {
+        $inst = new PQText();
+        return $inst->target($str);
+    }
+}
+
+if (!function_exists('text')) {
+    function text(mixed $str = ""): PQText {
+        return text_pq($str);
+    }
 }
 ?>

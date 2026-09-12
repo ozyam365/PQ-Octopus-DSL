@@ -1,8 +1,8 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.5)
- * FILENAME : /pq/core/object.php
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/core/object.php
  * COMPONENT : PQ Engine Scoper Kernel (v1.4.0 - Hybrid Scoper & Data Container)
  * =========================================================
  */
@@ -13,15 +13,15 @@ class PQEngine {
     private static $registry = [];
 
     /**
-     * 1. 최상위 객체 스코프 진입
-     * @param string $root_obj_name 루트 객체명
-     * @param bool $clear_registry true일 경우 레지스트리를 현재 객체 전용으로 리셋
+     * 1. Start top-level object scope
+     * @param string $root_obj_name Root object name
+     * @param bool $clear_registry Resets registry specifically for current object if true
      */
     public static function start_object_scope($root_obj_name, $clear_registry = false) {
-        self::$scope_stack = []; // 스코프 스택 리셋
+        self::$scope_stack = []; // Reset scope stack
         
         if ($clear_registry) {
-            self::$registry = []; // 🎯 선택적 레지스트리 초기화
+            self::$registry = []; // Optional registry initialization
         }
 
         self::$scope_stack[] = [
@@ -36,7 +36,7 @@ class PQEngine {
     }
 
     /**
-     * 2. 자식 계층 스코프 진입
+     * 2. Enter child hierarchy scope
      */
     public static function enter_child_scope($parent_path, $child_name, $index = null) {
         $current_path = $parent_path ? $parent_path . '.' . $child_name : $child_name;
@@ -56,7 +56,7 @@ class PQEngine {
     }
 
     /**
-     * 3. 스코프 안전 종결 (상위 스코프로 복원)
+     * 3. Safely terminate current scope and restore parent context
      */
     public static function end_scope() {
         $popped = array_pop(self::$scope_stack);
@@ -74,7 +74,7 @@ class PQEngine {
     }
 
     /**
-     * [컴포넌트 바인딩] have 명세 등록
+     * Component Registration Pipeline
      */
     public static function register_component($name, $index = null) {
         $ctx = self::get_current_context();
@@ -123,7 +123,7 @@ class PQEngine {
 }
 
 /**
- * 동적 체이닝, ArrayAccess 및 jQuery 스타일 .attr() 접근자를 지원하는 PQ 실행 객체
+ * PQ Execution Object supporting dynamic chaining, ArrayAccess, and jQuery-style .attr() accessors
  */
 #[AllowDynamicProperties]
 class PQObjectEngine implements ArrayAccess {
@@ -137,27 +137,27 @@ class PQObjectEngine implements ArrayAccess {
         }
     }
 
-	/**
-	 * 🚀 jQuery 스타일 .attr() 메서드 (가변 인자로 null 저장 오폭 방지)
-	 */
-	public function attr($key = null, ...$args) {
-		// 1. 전체 데이터 반환
-		if ($key === null) {
-			return $this->data;
-		}
+    /**
+     * jQuery-style .attr() method (prevents null storage overriding via variadic arguments)
+     */
+    public function attr($key = null, ...$args) {
+        // 1. Return entire data payload
+        if ($key === null) {
+            return $this->data;
+        }
 
-		// 2. Getter: 인자가 $key 하나뿐인 경우 (값 읽기)
-		if (count($args) === 0) {
-			return $this->data[$key] ?? null;
-		}
+        // 2. Getter: Reading value when single argument $key is supplied
+        if (count($args) === 0) {
+            return $this->data[$key] ?? null;
+        }
 
-		// 3. Setter: 두 번째 인자가 전달된 경우 (null 값 저장 포함)
-		$this->data[$key] = $args[0];
-		return $this;
-	}
+        // 3. Setter: Writing value when second argument is passed
+        $this->data[$key] = $args[0];
+        return $this;
+    }
 
     /**
-     * 자식 스코프 탐색 및 체이닝
+     * Child scope traversal and method chaining
      */
     public function getChild($name, $index = null) {
         PQEngine::enter_child_scope(
@@ -170,7 +170,7 @@ class PQObjectEngine implements ArrayAccess {
     }
 
     /**
-     * have 컴포넌트 등록 및 체이닝
+     * Register component specification and continue chaining
      */
     public function have($name, $index = null) {
         PQEngine::have($name, $index);
@@ -178,7 +178,7 @@ class PQObjectEngine implements ArrayAccess {
     }
 
     /**
-     * 상위 스코프로 복원하는 탈출 메서드 (.end())
+     * Scope restoration method (.end())
      */
     public function end() {
         $parent_path = PQEngine::end_scope();
@@ -187,7 +187,7 @@ class PQObjectEngine implements ArrayAccess {
     }
 
     /**
-     * 1. __get: 내부 $data 우선 참조 후, 없을 경우 스코프 자동 확장
+     * 1. __get: Prioritizes internal $data property, auto-expands scope otherwise
      */
     public function __get($name) {
         if (array_key_exists($name, $this->data)) {
@@ -199,14 +199,14 @@ class PQObjectEngine implements ArrayAccess {
     }
 
     /**
-     * 2. __set: 동적 속성 직접 대입 지원 (#rs.name = "val")
+     * 2. __set: Direct dynamic property assignment ($rs->name = "val")
      */
     public function __set($name, $value) {
         $this->data[$name] = $value;
     }
 
     /**
-     * 3. ArrayAccess: 배열 표기(#rs['key']) 및 인덱스 스코프 지원
+     * 3. ArrayAccess: Array syntax ($rs['key']) and index scope support
      */
     public function offsetGet(mixed $offset): mixed {
         if (array_key_exists($offset, $this->data)) {
@@ -232,12 +232,12 @@ class PQObjectEngine implements ArrayAccess {
     public function offsetUnset(mixed $offset): void { unset($this->data[$offset]); }
 
     /**
-     * 4. __call: 방어 로직이 강화된 메서드 체이닝
+     * 4. __call: Protected method chaining
      */
     public function __call($method, $args) {
         $context = PQEngine::get_current_context();
         
-        // null context일 경우 예외성 오작동 방어
+        // Guard against null context execution
         $target_key = $context ? $context . '.' . $method : $method;
 
         if (class_exists('Trace')) {
@@ -247,29 +247,37 @@ class PQObjectEngine implements ArrayAccess {
     }
 
     /**
-     * 전체 데이터를 배열로 추출
+     * Extract full payload data as a Collection object
      */
     public function all() {
         return ret($this->data);
     }
 }
 
-/**
- * 헬퍼 함수
- */
+// --- [ENGINE CORE] SINGLETON BRIDGES & HELPER WRAPPERS ---
 
-// 단문 인라인 체이닝 전용 헬퍼 함수
-if (!function_exists('have')) {
-    function have($root_name, $clear_registry = false) {
+if (!function_exists('have_pq')) {
+    function have_pq($root_name, $clear_registry = false) {
         PQEngine::start_object_scope($root_name, $clear_registry);
         return new PQObjectEngine($root_name);
     }
 }
 
-// 기존 체이닝 엔진 헬퍼 함수
+if (!function_exists('have')) {
+    function have($root_name, $clear_registry = false) {
+        return have_pq($root_name, $clear_registry);
+    }
+}
+
+if (!function_exists('obj_pq')) {
+    function obj_pq($data = []) {
+        return new PQObjectEngine('', $data);
+    }
+}
+
 if (!function_exists('obj')) {
     function obj($data = []) {
-        return new PQObjectEngine('', $data);
+        return obj_pq($data);
     }
 }
 
@@ -281,14 +289,14 @@ if (!function_exists('show')) {
 
 if (!function_exists('type')) {
     function type($v) {
-        if ($v === null) return "✨ [NULL] 데이터 자산 유실";
-        if (is_bool($v)) return "✨ [BOOLEAN] 논리형 (" . ($v ? 'TRUE' : 'FALSE') . ")";
-        if (is_int($v) || is_float($v)) return "✨ [NUMBER] 숫자 데이터";
-        if (is_string($v)) return "✨ [STRING] 원시 문자열";
+        if ($v === null) return "✨ [NULL] Data Asset Lost";
+        if (is_bool($v)) return "✨ [BOOLEAN] Logical (" . ($v ? 'TRUE' : 'FALSE') . ")";
+        if (is_int($v) || is_float($v)) return "✨ [NUMBER] Numeric Data";
+        if (is_string($v)) return "✨ [STRING] Primitive String";
         if (is_array($v)) {
-            return (count($v) === count($v, COUNT_RECURSIVE)) ? "✨ [ARRAY_ROW] 단일 행 레코드" : "✨ [ARRAY_LIST] 다차원 목록";
+            return (count($v) === count($v, COUNT_RECURSIVE)) ? "✨ [ARRAY_ROW] Single Row Record" : "✨ [ARRAY_LIST] Multidimensional List";
         }
-        return is_object($v) ? "✨ [OBJECT] 클래스 인스턴스 (" . get_class($v) . ")" : "✨ [UNKNOWN]";
+        return is_object($v) ? "✨ [OBJECT] Class Instance (" . get_class($v) . ")" : "✨ [UNKNOWN]";
     }
 }
 ?>
