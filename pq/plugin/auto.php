@@ -1,19 +1,22 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (v9.1.6)
- * FILENAME : /pq/plugin/auto.php
- * COMPONENT : PQ Automation Task Plugin (Part 1/2)
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/plugin/auto.php
+ * COMPONENT : PQ Automation Task & Cron Scheduler Plugin Core
  * =========================================================
  */
 
 class PQ_Auto_Engine {
     protected static $instance = null;
-    protected $mode = 'server'; // server 또는 client
+    protected $mode = 'server'; // 'server' or 'client'
     protected $time_rule = '';
     protected $is_matched = false;
-    protected $interval_ms = 600000; // 기본 10분
+    protected $interval_ms = 600000; // Default 10 minutes
 
+    /**
+     * Singleton Instance Factory
+     */
     public static function getInstance() {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -29,7 +32,7 @@ class PQ_Auto_Engine {
     }
 
     /**
-     * 🕵️ 서버단 크론탭 모드 선언
+     * Declare Server-side Crontab Mode
      */
     public function server() {
         $this->mode = 'server';
@@ -37,25 +40,20 @@ class PQ_Auto_Engine {
     }
 
     /**
-     * 🕵️ 웹 브라우저단 HTML5 크론탭 모드 선언
+     * Declare Client-side HTML5 Web Worker Crontab Mode
      */
     public function client() {
         $this->mode = 'client';
         return $this;
     }
 
-    /**
-     * =====================================================
-     * 1. 주기 판별 구역 (Dual Mode 대응)
-     * =====================================================
-     */
+    // --- [1. INTERVAL & SCHEDULE EVALUATION PIPELINE] ---
     public function every($interval) {
         $this->time_rule = "every " . $interval;
         $minutes = (int)str_replace('m', '', $interval);
-        $this->interval_ms = $minutes * 60 * 1000; // 밀리초 환산
+        $this->interval_ms = $minutes * 60 * 1000; // Convert to milliseconds
 
         if ($this->mode === 'server' || isset($_GET['pq_auto_trigger'])) {
-            // 🕵️ [경로 유실 완전 진압] 코어 상수를 활용하여 호스팅 환경 편차 차단
             $cache_dir = defined('PQ_TMP') ? PQ_TMP : dirname(__DIR__) . '/tmp';
             $log_file = $cache_dir . "/last_" . md5($this->time_rule) . ".time";
             
@@ -73,11 +71,8 @@ class PQ_Auto_Engine {
         }
         return $this;
     }
-    /**
-     * =====================================================
-     * 2. 집행 구역 (중복 렌더링 무력화 가로채기 방어선 장착)
-     * =====================================================
-     */
+
+    // --- [2. EXECUTION & TRIGGER DISPATCH PIPELINE] ---
     public function run($target_script) {
         if (isset($_GET['pq_auto_trigger']) && $_GET['pq_auto_task'] === $target_script) {
             $base_dir = defined('PQ_ROOT') ? PQ_ROOT : dirname(__DIR__, 2);
@@ -117,7 +112,7 @@ class PQ_Auto_Engine {
                     const worker = new Worker(URL.createObjectURL(blob));
                     worker.onmessage = function() {
                         fetch(" . json_encode($target_url, JSON_UNESCAPED_SLASHES) . ")
-                            .then(r => console.log('[PQ HTML5 Client Cron] Dispatched Secret Task -> " . $target_script . "'))
+                            .then(r => console.log('[PQ HTML5 Client Cron] Dispatched Task -> " . $target_script . "'))
                             .catch(e => console.error(e));
                     };
                     console.log('[PQ] HTML5 Web Worker Cron Client Loaded (" . $this->time_rule . ")');
@@ -138,11 +133,7 @@ class PQ_Auto_Engine {
     }
 }
 
-/**
- * =========================================================
- * AUTO FACADE INTERFACE (Fixed Compiler Synchronizer)
- * =========================================================
- */
+// --- [FACADE INTERFACE CLASS] ---
 class auto {
     public static function server() { return PQ_Auto_Engine::getInstance()->server(); }
     public static function client() { return PQ_Auto_Engine::getInstance()->client(); }
@@ -151,14 +142,17 @@ class auto {
     public static function log($msg) { return PQ_Auto_Engine::getInstance()->log($msg); }
 }
 
-/**
- * 🕵️ [전역 러너 바인딩 안전 쉴드 결속]
- * runner.php 내 27라인 주변의 전역 할당 인터페이스와 오차 없이 맞물리도록 
- * 팩토리 프로바이더 함수를 연동 전개 완료했습니다.
- */
+// --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
+
 if (!function_exists('auto_pq')) {
     function auto_pq() {
         return PQ_Auto_Engine::getInstance();
+    }
+}
+
+if (!function_exists('auto')) {
+    function auto() {
+        return auto_pq();
     }
 }
 ?>

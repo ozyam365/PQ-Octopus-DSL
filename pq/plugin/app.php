@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (v3.2 Official Enterprise Perfect Stable)
- * FILENAME : /pq/plugin/app.php
- * COMPONENT : PQ 엔진 모바일 UI 전담 플러그인 (Part 1/2)
+ * PQ VERSION (BETA VERSION 9.1.7)
+ * FILENAME  : /pq/plugin/app.php
+ * COMPONENT : PQ Mobile UI Component Matrix Plugin
  * =========================================================
  */
 
@@ -17,6 +17,9 @@ class PqPluginApp {
     private $b_shadow = false;
     private $b_style = []; 
 
+    /**
+     * Singleton Instance Factory
+     */
     public static function getInstance() {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -25,10 +28,10 @@ class PqPluginApp {
     }
 
     /**
-     * 1. 연속 체이닝 카드 빌더 시발점 (card)
+     * 1. Start Card Builder Chain (card)
      */
     public function card($title, $content = "") {
-        $this->b_title = is_array($title) ? "배열인자오류" : (string)$title;
+        $this->b_title = is_array($title) ? "Invalid Argument" : (string)$title;
         $this->b_content = is_array($content) ? "" : (string)$content;
         $this->b_badge = "";
         $this->b_icon = "";
@@ -38,7 +41,7 @@ class PqPluginApp {
     }
 
     /**
-     * 2. 빌더 전용 지능형 뱃지 바인더 (badge)
+     * 2. Card Badge Binder (badge)
      */
     public function badge($text) {
         $this->b_badge = is_array($text) ? "" : (string)$text;
@@ -46,7 +49,7 @@ class PqPluginApp {
     }
 
     /**
-     * 3. 빌더 전용 아이콘 바인더 (icon)
+     * 3. Card Icon Binder (icon)
      */
     public function icon($icon_name) {
         $this->b_icon = is_array($icon_name) ? "" : (string)$icon_name;
@@ -54,7 +57,7 @@ class PqPluginApp {
     }
 
     /**
-     *  4. 빌더 전용 그림자 스킨 바인더 (shadow)
+     * 4. Card Shadow Binder (shadow)
      */
     public function shadow($has_shadow = true) {
         $this->b_shadow = (bool)$has_shadow;
@@ -62,7 +65,7 @@ class PqPluginApp {
     }
 
     /**
-     *  5. 내용 추가 바인더 (desc)
+     * 5. Card Description Binder (desc)
      */
     public function desc($text) {
         $this->b_content = is_array($text) ? "" : (string)$text;
@@ -70,19 +73,19 @@ class PqPluginApp {
     }
 
     /**
-     *  6. 데이터 기반 스타일 맵 바인더 (style)
+     * 6. Card Style Mapper (style)
      */
-	public function style($style_input) {
-		if (is_array($style_input)) {
-			$this->b_style = $style_input;
-		} else if (is_string($style_input)) {
-			// 문자열로 넘어올 경우 카드 스킨 스타일로 자동 매핑
-			$this->b_style = ['card' => $style_input];
-		}
-		return $this; 
-	}
+    public function style($style_input) {
+        if (is_array($style_input)) {
+            $this->b_style = $style_input;
+        } else if (is_string($style_input)) {
+            $this->b_style = ['card' => $style_input];
+        }
+        return $this; 
+    }
+
     /**
-     * 배열 요소의 인덱스를 정밀 분해하여 PHP 8.0 trim 오류 완벽 차단
+     * Parse and map menu items to resolve index and active route safely
      */
     private function parseMenu($menu_data) {
         if (empty($menu_data)) return [];
@@ -103,7 +106,7 @@ class PqPluginApp {
 
         foreach ($raw_items as $item) {
             if (is_array($item)) {
-                $name = isset($item[0]) ? trim((string)$item[0]) : "메뉴";
+                $name = isset($item[0]) ? trim((string)$item[0]) : "Menu";
                 $link = isset($item[1]) ? trim((string)$item[1]) : "#";
                 $icon = isset($item[2]) ? trim((string)$item[2]) : "";
             } else {
@@ -115,11 +118,11 @@ class PqPluginApp {
             if ($link === '#' || empty($link)) { $link = "javascript:void(0);"; }
 
             if (empty($icon)) {
-                if (str_contains($name, '홈') || str_contains($name, '메인')) $icon = "house-door";
-                elseif (str_contains($name, '대시보드') || str_contains($name, '관제') || str_contains($name, '상태')) $icon = "speedometer2";
-                elseif (str_contains($name, '디비') || str_contains($name, 'DB') || str_contains($name, '데이터')) $icon = "database";
-                elseif (str_contains($name, '로그') || str_contains($name, '시스템')) $icon = "terminal";
-                elseif (str_contains($name, '설정') || str_contains($name, '환경')) $icon = "gear-fill";
+                if (str_contains($name, '홈') || str_contains($name, '메인') || str_contains($name, 'Home')) $icon = "house-door";
+                elseif (str_contains($name, '대시보드') || str_contains($name, '관제') || str_contains($name, 'Dashboard')) $icon = "speedometer2";
+                elseif (str_contains($name, '디비') || str_contains($name, 'DB') || str_contains($name, 'Data')) $icon = "database";
+                elseif (str_contains($name, '로그') || str_contains($name, 'Log')) $icon = "terminal";
+                elseif (str_contains($name, '설정') || str_contains($name, 'Setting')) $icon = "gear-fill";
                 else $icon = "circle";
             }
 
@@ -135,40 +138,40 @@ class PqPluginApp {
         }
         return $result;
     }
+
     public function navbar($title = "PQ Mobile", $leftIcon = "list", $rightIcon = "gear") {
         $clean_title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
         return '<nav class="navbar navbar-dark bg-dark fixed-top px-3 shadow-sm" style="height: 56px;"><div class="container-fluid d-flex justify-content-between align-items-center w-100 p-0"><button class="btn text-white p-0" id="pq-app-left-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#pq_mobile_sidebar"><i class="bi bi-' . $leftIcon . ' fs-4"></i></button><span class="navbar-brand mb-0 h1 mx-auto fs-5 fw-bold text-truncate" style="max-width: 60%;">' . $clean_title . '</span><button class="btn text-white p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#pq_mobile_drawer"><i class="bi bi-' . $rightIcon . ' fs-4"></i></button></div></nav>';
     }
 
-    public function sidebar($user_name = "관리자", $menu_data = null) {
-		if ($menu_data === null) {
-			return new PQSidebarBuilder($user_name);
-		}
-        $html = '<div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="pq_mobile_sidebar" style="width: 280px;"><div class="offcanvas-header border-bottom border-secondary py-4"><div class="d-flex align-items-center"><div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width:45px;height:45px;"><i class="bi bi-person-badge fs-4 text-white"></i></div><div><h6 class="offcanvas-title fw-bold m-0 text-white">' . htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8') . ' 요원</h6><small class="text-secondary" style="font-size:11px;">PQ 관제 권한자</small></div></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body p-0"><div class="list-group list-group-flush">';
+    public function sidebar($user_name = "Admin", $menu_data = null) {
+        if ($menu_data === null) {
+            return new PQSidebarBuilder($user_name);
+        }
+        $html = '<div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="pq_mobile_sidebar" style="width: 280px;"><div class="offcanvas-header border-bottom border-secondary py-4"><div class="d-flex align-items-center"><div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width:45px;height:45px;"><i class="bi bi-person-badge fs-4 text-white"></i></div><div><h6 class="offcanvas-title fw-bold m-0 text-white">' . htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8') . '</h6><small class="text-secondary" style="font-size:11px;">PQ Control Manager</small></div></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body p-0"><div class="list-group list-group-flush">';
         $menus = $this->parseMenu($menu_data);
         foreach ($menus as $m) { $bg = $m->active ? 'bg-secondary' : 'bg-transparent'; $html .= '<a href="' . $m->link . '" class="list-group-item list-group-item-action ' . $bg . ' border-0 py-3 px-4 d-flex align-items-center" style="color:#fff!important;"><i class="bi bi-' . $m->icon . ' text-primary me-3 fs-5"></i><span class="text-white" style="font-size:14px;font-weight:500;">' . $m->name . '</span></a>'; }
         $html .= '</div></div></div>'; return $html;
     }
 
-	public function footer($menu_data = null) {
-		if ($menu_data === null) {
-			return new PQFooterBuilder();
-		}
-		$html = '<div class="fixed-bottom bg-white border-top shadow-lg" style="height: 60px; z-index: 1030;"><div class="row text-center py-2 m-0 h-100 align-items-center">';
+    public function footer($menu_data = null) {
+        if ($menu_data === null) {
+            return new PQFooterBuilder();
+        }
+        $html = '<div class="fixed-bottom bg-white border-top shadow-lg" style="height: 60px; z-index: 1030;"><div class="row text-center py-2 m-0 h-100 align-items-center">';
         $menus = $this->parseMenu($menu_data);
         if (!empty($menus)) { $col_width = floor(12 / count($menus)); foreach ($menus as $m) { $text_color = $m->active ? 'text-primary' : 'text-secondary'; $html .= '<div class="col-' . $col_width . ' p-0"><a href="' . $m->link . '" class="nav-link ' . $text_color . ' p-0 d-block text-decoration-none"><i class="bi bi-' . $m->icon . ' d-block fs-5 mb-0"></i><span style="font-size:11px;display:block;margin-top:-2px;">' . $m->name . '</span></a></div>'; } }
         $html .= '</div></div>'; return $html;
     }
 
-	public function menuGroup($group_data = null) {
-		if ($group_data === null) {
-			return new PQMenuGroupBuilder();
-		}
-		$menus = $this->parseMenu($group_data);
-		if (empty($menus)) {
-			return "";
-		}
-        $menus = $this->parseMenu($group_data); if (empty($menus)) return "";
+    public function menuGroup($group_data = null) {
+        if ($group_data === null) {
+            return new PQMenuGroupBuilder();
+        }
+        $menus = $this->parseMenu($group_data);
+        if (empty($menus)) {
+            return "";
+        }
         $html = '<div class="list-group list-group-flush border-top border-bottom my-2 shadow-sm">';
         foreach ($menus as $m) { $html .= '<a href="' . $m->link . '" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 bg-white"><div class="d-flex align-items-center"><i class="bi bi-' . $m->icon . ' text-primary me-2"></i><span class="fw-semibold text-dark" style="font-size:14px;">' . $m->name . '</span></div><i class="bi bi-chevron-right text-muted small"></i></a>'; }
         $html .= '</div>'; return $html;
@@ -181,10 +184,10 @@ class PqPluginApp {
         $html .= '</div>'; return $html;
     }
 
-	public function drawer($title = "퀵 제어센터",$content_html = null){
-		if ($content_html === null) {
-			return new PQDrawerBuilder($title);
-	    }
+    public function drawer($title = "Quick Control Panel", $content_html = null){
+        if ($content_html === null) {
+            return new PQDrawerBuilder($title);
+        }
         return '<div class="offcanvas offcanvas-bottom bg-white" tabindex="-1" id="pq_mobile_drawer" style="height:40vh;border-radius:20px 20px 0 0;"><div class="offcanvas-header border-bottom py-3"><h6 class="offcanvas-title fw-bold text-dark"><i class="bi bi-sliders me-2 text-primary"></i>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h6><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body p-3">' . $content_html . '</div></div>';
     }
 
@@ -193,7 +196,7 @@ class PqPluginApp {
     }
 
     /**
-     *  카드 스킨 레이아웃 빌더 아웃풋 연산 사수
+     * Render Card Component HTML
      */
     public function __toString() {
         $title = (string)$this->b_title;
@@ -203,12 +206,12 @@ class PqPluginApp {
         $style = (array)$this->b_style;
 
         if (empty($icon)) {
-            if (str_contains($title, '홈') || str_contains($title, '메인')) $icon = "house-door";
-            elseif (str_contains($title, '대시보드') || str_contains($title, '관제') || str_contains($title, '상태')) $icon = "speedometer2";
-            elseif (str_contains($title, '디비') || str_contains($title, 'DB') || str_contains($title, '데이터')) $icon = "database";
-            elseif (str_contains($title, '로그') || str_contains($title, '터미널')) $icon = "terminal";
-            elseif (str_contains($title, '설정') || str_contains($title, '환경')) $icon = "gear-fill";
-            elseif (str_contains($title, '알림') || str_contains($title, '공지') || str_contains($title, '경보')) $icon = "bell";
+            if (str_contains($title, '홈') || str_contains($title, '메인') || str_contains($title, 'Home')) $icon = "house-door";
+            elseif (str_contains($title, '대시보드') || str_contains($title, '관제') || str_contains($title, 'Dashboard')) $icon = "speedometer2";
+            elseif (str_contains($title, '디비') || str_contains($title, 'DB') || str_contains($title, 'Data')) $icon = "database";
+            elseif (str_contains($title, '로그') || str_contains($title, 'Log')) $icon = "terminal";
+            elseif (str_contains($title, '설정') || str_contains($title, 'Setting')) $icon = "gear-fill";
+            elseif (str_contains($title, '알림') || str_contains($title, '공지') || str_contains($title, 'Notice')) $icon = "bell";
             else $icon = "circle";
         }
 
@@ -220,9 +223,9 @@ class PqPluginApp {
                 $badge_cls = $style['badge'];
             } else {
                 $badge_cls = "bg-secondary text-white";
-                if (str_contains($badge, '정상') || str_contains($badge, '완료') || str_contains($badge, '성공')) $badge_cls = "bg-success-subtle text-success border border-success";
-                elseif (str_contains($badge, '위험') || str_contains($badge, '에러') || str_contains($badge, '실패')) $badge_cls = "bg-danger-subtle text-danger border border-danger";
-                elseif (str_contains($badge, '대기') || str_contains($badge, '경고')) $badge_cls = "bg-warning-subtle text-warning border border-warning";
+                if (str_contains($badge, '정상') || str_contains($badge, '완료') || str_contains($badge, '성공') || str_contains($badge, 'OK')) $badge_cls = "bg-success-subtle text-success border border-success";
+                elseif (str_contains($badge, '위험') || str_contains($badge, '에러') || str_contains($badge, '실패') || str_contains($badge, 'Error')) $badge_cls = "bg-danger-subtle text-danger border border-danger";
+                elseif (str_contains($badge, '대기') || str_contains($badge, '경고') || str_contains($badge, 'Warning')) $badge_cls = "bg-warning-subtle text-warning border border-warning";
             }
             $badge_html = '<span class="badge ' . $badge_cls . ' rounded-pill px-2.5 py-1" style="font-size:11px;">' . htmlspecialchars($badge, ENT_QUOTES, 'UTF-8') . '</span>';
         }
@@ -243,10 +246,12 @@ class PqPluginApp {
         </div>';
     }
 }
- class PQFooterBuilder {
+
+class PQFooterBuilder {
     private $theme = "";
     private $activeColor = "text-primary"; 
     private $menus = [];
+    
     public function add($title, $url, $icon = "") {
         $this->menus[] = [
             'title' => $title,
@@ -255,6 +260,7 @@ class PqPluginApp {
         ];
         return $this;
     }
+    
     public function __toString() {
         $app = pq_app();
         $menu_data = [];
@@ -268,14 +274,17 @@ class PqPluginApp {
         return $app->footer($menu_data);
     }
 }
+
 class PQSidebarBuilder {
-	private $theme = "";
-	private $activeColor = "text-primary";
+    private $theme = "";
+    private $activeColor = "text-primary";
     private $user_name;
     private $menus = [];
+    
     public function __construct($user_name) {
         $this->user_name = $user_name;
     }
+    
     public function add($title, $url, $icon = "") {
         $this->menus[] = [
             $title,
@@ -284,46 +293,39 @@ class PQSidebarBuilder {
         ];
         return $this;
     }
-	public function theme($theme) {
-		$this->theme = (string)$theme;
-		return $this;
-	}
-	public function activeColor($color) {
-		$this->activeColor = (string)$color;
-		return $this;
-	}	
+    
+    public function theme($theme) {
+        $this->theme = (string)$theme;
+        return $this;
+    }
+    
+    public function activeColor($color) {
+        $this->activeColor = (string)$color;
+        return $this;
+    }    
+    
     public function __toString() {
         $app = pq_app();
-		$html = $app->sidebar(
-			$this->user_name,
-			$this->menus
-		);		
-		if ($this->theme == "dark") {
-			$html = str_replace(
-				"bg-dark",
-				"bg-dark text-white",
-				$html
-			);
-		}
-		if ($this->theme == "light") {
-			$html = str_replace(
-				"bg-dark",
-				"bg-white text-dark",
-				$html
-			);
-		}
-		if ($this->activeColor) {
-			$html = str_replace(
-				"text-primary",
-				$this->activeColor,
-				$html
-			);
-		}
-		return $html;		
+        $html = $app->sidebar(
+            $this->user_name,
+            $this->menus
+        );        
+        if ($this->theme == "dark") {
+            $html = str_replace("bg-dark", "bg-dark text-white", $html);
+        }
+        if ($this->theme == "light") {
+            $html = str_replace("bg-dark", "bg-white text-dark", $html);
+        }
+        if ($this->activeColor) {
+            $html = str_replace("text-primary", $this->activeColor, $html);
+        }
+        return $html;        
     }
 }
+
 class PQMenuGroupBuilder {
     private $menus = [];
+    
     public function add(
         $title,
         $url,
@@ -342,6 +344,7 @@ class PQMenuGroupBuilder {
         ];
         return $this;
     }
+    
     public function __toString() {
         $html = '<div class="list-group shadow-sm rounded-3 overflow-hidden">';
         foreach ($this->menus as $m) {
@@ -362,12 +365,15 @@ class PQMenuGroupBuilder {
         return $html;
     }
 }
+
 class PQDrawerBuilder {
     private $title;
     private $buttons = [];
+    
     public function __construct($title) {
         $this->title = $title;
     }
+    
     public function button($text, $icon = "", $color = "dark") {
         $this->buttons[] = [
             'text'  => $text,
@@ -376,6 +382,7 @@ class PQDrawerBuilder {
         ];
         return $this;
     }
+    
     public function __toString() {
         $html = '<div class="list-group list-group-flush">';
         foreach ($this->buttons as $btn) {
@@ -392,13 +399,24 @@ class PQDrawerBuilder {
         );
     }
 }
+
+// --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
+
 if (!function_exists('pq_app')) {
-    function pq_app() { return PqPluginApp::getInstance(); }
-}
-if (!function_exists('app_pq')) {
-    function app_pq() { return pq_app(); }
+    function pq_app() { 
+        return PqPluginApp::getInstance(); 
+    }
 }
 
-$GLOBALS['app'] = pq_app(); 
-$app = $GLOBALS['app'];
+if (!function_exists('app_pq')) {
+    function app_pq() { 
+        return pq_app(); 
+    }
+}
+
+if (!function_exists('app')) {
+    function app() {
+        return pq_app();
+    }
+}
 ?>
