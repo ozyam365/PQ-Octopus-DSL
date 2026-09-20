@@ -1,7 +1,7 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ VERSION (BETA VERSION 9.1.8)
  * FILENAME  : /pq/core/db.php  
  * COMPONENT : PQ Fluent Database Query Builder Core
  * =========================================================
@@ -209,7 +209,42 @@ class DBMaker implements IteratorAggregate {
         $arr = is_object($row) && method_exists($row, 'array') ? $row->array() : (array)$row;
         return isset($arr[$field]) && $arr[$field] !== null ? $arr[$field] : $default;
     }
+	// =========================================================
+	// Pagination Utility Function
+	// =========================================================
+	public function pager($base_q, $page = 1, $limit = 10) {
+		$limit = (int)$limit;
+		if ($limit < 1) $limit = 10;
 
+		$page = (int)$page;
+		if ($page < 1) $page = 1;
+
+		$trimmed_base = trim($base_q);
+
+		if (strncasecmp($trimmed_base, 'from', 4) !== 0) {
+			$trimmed_base = "FROM " . $trimmed_base;
+		}
+
+		$countSql = "SELECT COUNT(*) " . $trimmed_base;
+		$total = (int)$this->count($countSql);
+
+		$totalpg = (int)ceil($total / $limit);
+		if ($totalpg < 1) $totalpg = 1;
+
+		if ($page > $totalpg) {
+			$page = 1;
+		}
+
+		$first = $limit * ($page - 1);
+
+		return [
+			'total'   => $total,
+			'totalpg' => $totalpg,
+			'page'    => $page,
+			'limit'   => $limit,
+			'first'   => $first
+		];
+	}
     // =========================================================
     // Query Builder Chaining Methods
     // =========================================================
