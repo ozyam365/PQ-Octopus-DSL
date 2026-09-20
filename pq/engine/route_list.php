@@ -68,4 +68,5 @@ $route->url($_mmenu);
 $route->url($_smenu);
 $route->url($_amenu);
 $route->url($_pmenu);
+//$route->auto('/html/csm', '/adm');
 ?>
