@@ -1,19 +1,17 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ VERSION (BETA VERSION 9.2.0)
  * FILENAME  : /pq/engine/runner.php
  * COMPONENT : run_pq / Core Cache & DX Error Code System 
  * =========================================================
  */
-
 // [CONFIG] Context Output Escaping Constants
 define('PQ_CTX_TEXT',   0);
 define('PQ_CTX_ATTR',   1);
 define('PQ_CTX_HTML',   2);
 define('PQ_CTX_SCRIPT', 3);
 define('PQ_CTX_STYLE',  4);
-
 // [CONFIG] Core Helper Bridge Mapping
 if (!defined('PQ_RESERVED_MAP')) {
     define('PQ_RESERVED_MAP', [
@@ -32,7 +30,6 @@ if (!defined('PQ_RESERVED_MAP')) {
         'navi'    => '$navi->'
     ]);
 }
-
 $GLOBALS['PQ_COMPILE_LOG'] = [
     'cache'     => [],
     'guard'     => [],
@@ -40,23 +37,18 @@ $GLOBALS['PQ_COMPILE_LOG'] = [
     'optimizer' => [],
     'error'     => []
 ];
-
 // [REQUIRED] Global Exception Handler for Unhandled Throwables
 set_exception_handler(function (\Throwable $e) {
     while (ob_get_level() > 0) { 
         ob_end_clean(); 
     }
-
     echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PQ DSL System Error</title></head>';
     echo '<body style="background:#121215; margin:0; padding:40px 20px; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; box-sizing:border-box;">';
     echo '<div class="main-content-error-wrapper" style="width:100%; max-width:1100px;">';
-    
     pq_render_gorgeous_error($e);
-    
     echo '</div></body></html>';
     exit;
 });
-
 function pq_output_func($ctx){
     switch ($ctx) {
         case PQ_CTX_HTML:   return 'pq_raw';   
@@ -66,7 +58,6 @@ function pq_output_func($ctx){
         default:            return 'pq_clean';
     }
 }
-
 /**
  * [CONFIG] Expression Compiler Pipeline
  */
@@ -76,52 +67,41 @@ function pq_compile_expr($expr) {
             "[PQ-E1004] Array variable ({$m[1]}) cannot use Dot (.) property accessor. Use bracket syntax {$m[1]}['{$m[2]}'] instead."
         );
     }
-
     if (preg_match('/(#[a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*[\'"]?([a-zA-Z0-9_]+)[\'"]?\s*\]/', $expr, $m)) {
         throw new \RuntimeException(
             "[PQ-E1005] Object variable ({$m[1]}) cannot use Bracket (['']) array accessor. Use Dot syntax {$m[1]}.{$m[2]} instead."
         );
     }
-
     $expr = preg_replace('/(?<![a-zA-Z0-9_\$->])date\s*\(/i', 'date_pq(', $expr);
     $expr = preg_replace('/pq\.throw\s*\((.*?)\)/i', 'throw new \\Exception($1)', $expr);
-    
     $expr = preg_replace(
         '/#([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\s*=\s*\[/', 
         '$$$1 = (object)[', 
         $expr
     );
-
-	$expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1->$2', $expr);
-	$expr = preg_replace('/(?<![\$a-zA-Z0-9_])auth\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'auth()->$1', $expr);
-	$expr = preg_replace('/(?<![\$a-zA-Z0-9_])url\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'PQRouter::$1', $expr);
-	$expr = preg_replace('/@([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
-	$expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
-	
+    $expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1->$2', $expr);
+    $expr = preg_replace('/(?<![\$a-zA-Z0-9_])auth\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'auth()->$1', $expr);
+    $expr = preg_replace('/(?<![\$a-zA-Z0-9_])url\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 'PQRouter::$1', $expr);
+    $expr = preg_replace('/@([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
+    $expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
     foreach (PQ_RESERVED_MAP as $r => $bridge) {
         $expr = preg_replace('/(?<![\$a-zA-Z0-9_])' . preg_quote($r, '/') . '\.([a-zA-Z_])/i', $bridge . '$1', $expr);
     }   
-    
     $expr = preg_replace('/(\)|\]|\$[a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/', '$1->$2(', $expr);
-    
     $expr = preg_replace('/(\$(?:e|err|ex|exception))\->message\b/i', '$1->getMessage()', $expr);
     $expr = preg_replace('/(\$(?:e|err|ex|exception))\->code\b/i',    '$1->getCode()', $expr);
     $expr = preg_replace('/(\$(?:e|err|ex|exception))\->file\b/i',    '$1->getFile()', $expr);
     $expr = preg_replace('/(\$(?:e|err|ex|exception))\->line\b/i',    '$1->getLine()', $expr);
     $expr = preg_replace('/(\$(?:e|err|ex|exception))\->trace\b/i',   '$1->getTraceAsString()', $expr);
-    
     return $expr;
 }
-
 function import_pq($file_path) {
     if (file_exists($file_path)) { run_pq($file_path); }
 }
-
 function pq_resolve_path($path) {    
     $path = str_replace('/path/', '', $path);
     return ltrim($path, '/');
 }
-
 function pq_parse_var($code, $i){
     $len = strlen($code); $expr = ''; $i++;
     while($i < $len){
@@ -135,7 +115,6 @@ function pq_parse_var($code, $i){
     }
     return [$expr, $i - 1]; 
 }
-
 function pq_parse_object($code, $i){
     $len = strlen($code); $expr = ''; $i++;
     while($i < $len){
@@ -145,12 +124,10 @@ function pq_parse_object($code, $i){
     }
     return [$expr, $i - 1]; 
 }
-
 function pq_compile_print($code) {
     $len = strlen($code); 
     $i = 9;
     $buffer = ''; $args = [];
-    
     while ($i < $len) {
         $ch = $code[$i];
         if ($ch === '"' || $ch === "'") { $i++; continue; }        
@@ -189,7 +166,6 @@ function pq_compile_print($code) {
     $php = 'pq_print(' . implode(',', $args) . ');';
     return [$php, $i];
 }
-
 function pq_parse_array($code, $i){
     $len = strlen($code); $expr = '$'; $depth = 0; $i++;
     while ($i < $len){
@@ -212,7 +188,6 @@ function pq_parse_array($code, $i){
     }
     return [$expr,$i];
 }
-
 /**
  * [REQUIRED] Core Template Execution Engine & Context Evaluator
  */
@@ -221,10 +196,8 @@ function run_pq($file_path, $__parent_vars = []) {
     static $call_stack = []; static $depth = 0;
     $depth++; $call_stack[] = $file_path;
     if ($depth > 15) { exit; }
-
     $cache_md5 = md5($file_path);
     $GLOBALS['PQ_ROUTE_MAP'][$cache_md5] = $file_path;
-
     if (!empty($__parent_vars)) {
         unset(
             $__parent_vars['__parent_vars'], $__parent_vars['file_path'], 
@@ -233,46 +206,37 @@ function run_pq($file_path, $__parent_vars = []) {
         );
         extract($__parent_vars, EXTR_SKIP);
     }
-    
     global $version, $db, $form, $file, $session, $cookie, $http, $date, $time, $trace, $app, $ai, $iot, $text, $excel, $pdf, $navi, $html, $auth, $pin, $ret;
-    
     if (empty($auth))     { $auth     = isset($GLOBALS['auth']) ? $GLOBALS['auth'] : (function_exists('auth') ? auth() : null); }
     if (empty($db))       { $db       = isset($GLOBALS['db']) ? $GLOBALS['db'] : (function_exists('db') ? db() : null); }
     if (empty($http))     { $http     = isset($GLOBALS['http']) ? $GLOBALS['http'] : (function_exists('http_pq') ? http_pq() : null); }
     if (empty($app))      { $app      = isset($GLOBALS['app']) ? $GLOBALS['app'] : null; }
     if (empty($session))  { $session  = isset($GLOBALS['session']) ? $GLOBALS['session'] : (function_exists('session_pq') ? session_pq() : null); }
     if (empty($cookie))   { $cookie   = isset($GLOBALS['cookie']) ? $GLOBALS['cookie'] : (function_exists('cookie') ? cookie() : null); }
-
     if (empty($form) || !is_object($form)) {
         $form = function_exists('form') ? form() : null;
     }
     if (!is_object($form)) {
         throw new RuntimeException('[PQ-E1003] PQ FORM CORE Initialization Failed');
     }
-
     if (empty($file) || !is_object($file)) {
         $file = function_exists('file_pq') ? file_pq() : null;
     }
     if (!is_object($file)) {
         throw new RuntimeException('[PQ-E1002] PQ FILE CORE Initialization Failed');
     }
-
     if (empty($date))     { $date     = isset($GLOBALS['date']) ? $GLOBALS['date'] : (function_exists('date_pq') ? date_pq() : null); }
     if (empty($time))     { $time     = isset($GLOBALS['time']) ? $GLOBALS['time'] : (function_exists('time_pq') ? time_pq() : null); }
     if (empty($text))     { $text     = isset($GLOBALS['text']) ? $GLOBALS['text'] : (function_exists('text') ? text() : null); }
     if (empty($html))     { $html     = isset($GLOBALS['html']) ? $GLOBALS['html'] : (function_exists('html') ? html() : null); }
     if (empty($navi))     { $navi     = isset($GLOBALS['navi']) ? $GLOBALS['navi'] : (function_exists('navi') ? navi() : null); }
-
     extract($GLOBALS, EXTR_SKIP);
     if (empty($db) && function_exists('db')) { $db = db(); }
     if (empty($http) && function_exists('http_pq')) { $http = http_pq(); }
-    
     $cache_file = dirname(__DIR__) . '/tmp/' . $cache_md5 . '.php';
-    
     if (file_exists($cache_file) && (filemtime($cache_file) > filemtime($file_path))) {
         include $cache_file; $depth--; array_pop($call_stack); return;
     }
-
     try {
         pq_log('run_pq','guard', 'guard start');
         $raw = file_get_contents($file_path);
@@ -287,14 +251,12 @@ function run_pq($file_path, $__parent_vars = []) {
         throw $e;
     }
 }
-
 function pq_compile($content) {
     $GLOBALS['PQ_REPEAT_STACK'] = [];
     $output = perform_lexing($content);
     $output = perform_optimization($output);
     return $output;
 }
-
 function pq_compile_foreach($expr){
     $key = '';
     $index = '';
@@ -311,10 +273,8 @@ function pq_compile_foreach($expr){
     }
     $list = pq_compile_expr(trim($m[1]));
     $row  = pq_compile_expr(trim($m[2]));
-
     if ($key !== '') { $key = pq_compile_expr($key); }
     if ($index !== '') { $index = pq_compile_expr($index); }   
-
     $php = '';
     if ($index !== '') { $php .= "{$index} = 0;\n"; }
     if ($key != '') {
@@ -330,40 +290,32 @@ function pq_compile_foreach($expr){
     ];
     return $php;
 }
-
 function pq_compile_for($full_expr){
     $init_var = '';
     $init_val = '0';
     $step_val = '1';
-
     if (preg_match('/\.set\(\s*@([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.*?)\s*\)/i', $full_expr, $m)) {
         $init_var = '$' . $m[1];
         $init_val = pq_compile_expr($m[2]);
         $full_expr = preg_replace('/\.set\(.*?\)/i', '', $full_expr);
     }
-
     if (preg_match('/\.step\(\s*(.*?)\s*\)/i', $full_expr, $m)) {
         $step_val = pq_compile_expr($m[1]);
         $full_expr = preg_replace('/\.step\(.*?\)/i', '', $full_expr);
     }
-
     $clean_cond = trim($full_expr);
     if (strpos($clean_cond, '(') === 0 && strrpos($clean_cond, ')') === strlen($clean_cond) - 1) {
         $clean_cond = substr($clean_cond, 1, -1);
     }
     $clean_cond = pq_compile_expr($clean_cond);
-
     if (empty($init_var) && preg_match('/\$([a-zA-Z_][a-zA-Z0-9_]*)/', $clean_cond, $m)) {
         $init_var = '$' . $m[1];
     }
-
     if (empty($init_var)) {
         return "/* PQ FOR ERROR : missing .set() */";
     }
-
     return "for ({$init_var} = {$init_val}; {$clean_cond}; {$init_var} += {$step_val}){";
 }
-
 function pq_compile_while($expr){
     $expr = trim($expr);
     if (strpos($expr, '(') === 0 && strrpos($expr, ')') === strlen($expr) - 1) {
@@ -372,22 +324,28 @@ function pq_compile_while($expr){
     $expr = pq_compile_expr($expr);
     return "while ({$expr}){";
 }
-
 function pq_compile_repeat($expr){
     if (strpos($expr, '.set(') !== false) {
         return pq_compile_for($expr);
     }
     return pq_compile_while($expr);
 }
-
 function perform_lexing($content) {
-    $len = strlen($content); $output = ""; $state = "HTML"; $ctx = PQ_CTX_TEXT;
-    $quote_char = ""; $echo_zone_buf = ""; $inside_tag_bracket = false; $inside_attr = false; $attr_quote = '';    
-    
+    $len = strlen($content); 
+$output = ""; 
+$state = "HTML"; 
+$ctx = PQ_CTX_TEXT;
+    // [PQ FN GLOBAL CONTEXT]
+    $inside_fn = false;
+    $fn_globals = [];
+    $quote_char = ""; 
+$echo_zone_buf = ""; 
+$inside_tag_bracket = false; 
+$inside_attr = false; 
+$attr_quote = '';    
     for ($i = 0; $i < $len; $i++) { 
         $char = $content[$i];
         $next = ($i + 1 < $len) ? $content[$i+1] : "";
-        
         if ($state === "HTML") {
             $remain_str = substr($content, $i);
             if ($char === '<') {
@@ -433,18 +391,19 @@ function perform_lexing($content) {
         }
         else if ($state === "NORMAL") {
             $is_front_boundary = ($i === 0) || !preg_match('/[a-zA-Z0-9_]/', $content[$i-1]);
-
             if ($is_front_boundary && $char === 'f' && substr($content, $i, 3) === "fn ") {
                 $remain_fn = substr($content, $i);
                 if (preg_match('/^fn\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*?)\)\s*(:|\{)?/i', $remain_fn, $fn_m)) {
                     $fn_name = $fn_m[1];
                     $fn_args = pq_compile_expr($fn_m[2]);
+$inside_fn = true;
+$fn_globals = [];
                     $output .= "function " . $fn_name . "(" . $fn_args . ") {";
+$output .= "global \$_FN;\n";
                     $i += (strlen($fn_m[0]) - 1);
                     continue;
                 }
             }
-
             if ($char === '.' && substr($content, $i, 6) === ".fail(") {
                 if (preg_match('/^\.fail\(\s*#([a-zA-Z_][a-zA-Z0-9_]*)\s*\)\s*:?;?/i', substr($content, $i), $m)) {
                     $var_name = $m[1];
@@ -453,7 +412,6 @@ function perform_lexing($content) {
                     continue;
                 }
             }
-
             if ($char === '.' && substr($content, $i, 5) === ".run:") {
                 $jump_len = 5;
                 if (isset($content[$i + 5]) && $content[$i + 5] === ';') { $jump_len = 6; }
@@ -464,17 +422,14 @@ function perform_lexing($content) {
             if ($char === 'd' && strncasecmp(substr($content, $i, 5), "date(", 5) === 0) {
                 $prevChar = ($i > 0) ? $content[$i - 1] : '';
                 $prevTwoChar = ($i > 1) ? substr($content, $i - 2, 2) : '';
-
                 $isInsideWord = preg_match('/[a-zA-Z0-9_\$]/', $prevChar);
                 $isMethodCall = ($prevTwoChar === '->');
-
                 if (!$isInsideWord && !$isMethodCall) {
                     $output .= "date_pq(";
                     $i += 4;
                     continue;
                 }
             }
-            
             if ($is_front_boundary) {
                 if (in_array($char, ['i', 'e', 'f', 'w', 'h', 'b', 'r', 's'])) {
                     if ($char === 'r' && substr($content, $i, 5) === "rule:") {
@@ -484,18 +439,16 @@ function perform_lexing($content) {
                         $i += ($jump_len - 1);
                         continue;
                     }  
-
                     $ctrl_word = "";
                     if ($char === 'i' && substr($content, $i, 2) === "if") { $ctrl_word = "if"; }                
                     elseif ($char === 'e' && substr($content, $i, 6) === "elseif") { $ctrl_word = "elseif"; }
                     elseif ($char === 'f' && substr($content, $i, 7) === "foreach") { $ctrl_word = "foreach"; }
                     elseif ($char === 'f' && substr($content, $i, 3) === "for") { $ctrl_word = "for"; }
                     elseif ($char === 'w' && substr($content, $i, 5) === "while") { $ctrl_word = "while"; }
-                    elseif ($char === 's' && substr($content, $i, 6) === "switch") { $ctrl_word = "switch"; }                   
+                    elseif ($char === 's' && substr($content, $i, 6) === "switch") { $ctrl_word = "switch"; }                    
                     elseif ($char === 'h' && substr($content, $i, 3) === "has") { $ctrl_word = "has"; }
                     elseif ($char === 'b' && substr($content, $i, 5) === "blank") { $ctrl_word = "blank"; }
                     elseif ($char === 'r' && substr($content, $i, 6) === "repeat") { $ctrl_word = "repeat"; } 
-                    
                     if ($ctrl_word !== "") {
                         $next_char_idx = $i + strlen($ctrl_word);
                         $is_rear_boundary = ($next_char_idx >= $len) || !preg_match('/[a-zA-Z0-9_]/', $content[$next_char_idx]);
@@ -540,7 +493,6 @@ function perform_lexing($content) {
                                     }
                                     break;
                                 }
-                                                            
                                 if ($colon_found) {                                
                                     if ($ctrl_word === 'repeat') {
                                         $expr = trim($repeat_expr);                                
@@ -557,6 +509,12 @@ function perform_lexing($content) {
                                     } 
                                     else {
                                         $condition = pq_compile_expr(trim($condition_buf));
+										if ($inside_fn && !empty($fn_globals)) {
+											foreach ($fn_globals as $global_var => $_dummy) {
+												$var_name = substr($global_var, 1);
+												$condition = preg_replace('/(?<![a-zA-Z0-9_])\$' . preg_quote($var_name, '/') . '\b/',"\$GLOBALS['_FN']['{$var_name}']",$condition);
+											}
+										}
                                         switch ($ctrl_word) {
                                             case 'has':                                                     
                                                 $var_php = str_replace('@', '$', $condition); 
@@ -565,7 +523,7 @@ function perform_lexing($content) {
                                             case 'blank':
                                                 $var_php = str_replace('@', '$', $condition);
                                                 $output .= 'if(!isset(' . $var_php . ') || blank(' . $var_php . ')){';                                        
-                                                break;                                                     
+                                                break;                                                    
                                             default:
                                                 $output .= $ctrl_word . '(' . $condition . '){'; 
                                                 break;
@@ -578,7 +536,6 @@ function perform_lexing($content) {
                     }
                 }
             }
-
             if ($char === 'e' && substr($content, $i, 4) === "else" && substr($content, $i, 6) !== "elseif") {
                 $colon_found = false; $final_jump_idx = $i + 3;
                 for ($k = $i + 4; $k < $len; $k++) {
@@ -593,7 +550,6 @@ function perform_lexing($content) {
                 }
                 if ($colon_found) { $output .= '} else {'; $i = $final_jump_idx; continue; }
             }
-
             if (preg_match('/^end(has|blank|if|for|while|foreach|repeat|switch|rule|fn)\b/i', substr($content, $i), $end_m)) {
                 $matched_word = strtolower($end_m[1]);
                 switch ($matched_word) {
@@ -616,19 +572,33 @@ function perform_lexing($content) {
                     }
                     break;
                 }
-
                 if ($matched_word === 'repeat' && !empty($GLOBALS['PQ_REPEAT_STACK'])) {
                     $repeat = array_pop($GLOBALS['PQ_REPEAT_STACK']);
                     if (!empty($repeat['index'])) {
                         $output .= $repeat['index'] . "++;\n";
                     }
                 }
-                
-                $output .= "}\n";
+				if ($matched_word === 'fn') {
+					$current_fn_globals = $fn_globals;
+					$inside_fn = false;
+				}
+				$output .= "}\n";
+				if ($matched_word === 'fn' && !empty($current_fn_globals)) {
+					if (!isset($GLOBALS['_FN'])) {
+						$GLOBALS['_FN'] = [];
+					}
+					foreach ($current_fn_globals as $global_var => $_dummy) {
+						$var_name = substr($global_var, 1);
+						$output .= "\$GLOBALS['_FN']['{$var_name}'] =& \${$var_name};\n";
+					}
+					$current_fn_globals = [];
+				}
+				if ($matched_word === 'fn') {
+					$fn_globals = [];
+				}
                 $i = $final_jump_idx; 
                 continue;
             }
-
             if ($char === 'p') {
                 $remain = substr($content, $i);
                 if (preg_match('/^pq\.(print|echo)\(/', $remain)) {
@@ -648,12 +618,10 @@ function perform_lexing($content) {
             }
             if ($char === '"' || $char === "'" || $char === '`') { $state = "STRING"; $quote_char = $char; $output .= $char; continue; }
             if ($char === '/' && $next === '/') { $state = "COMMENT"; $i++; continue; }
-            
             $remain_block = substr($content, $i, 15);
             if (preg_match('/^(if|foreach|else|while|for)\b/i', $remain_block, $reg_match)) {
                 $output .= $reg_match[0]; $i += (strlen($reg_match[0]) - 1); continue;
             }
-            
             $maps = [ 
                 'pq.'     => 'pq()->',              
                 'auth.'   => 'auth()->', 
@@ -688,42 +656,84 @@ function perform_lexing($content) {
                 $after_dot = substr($content, $i + 1, 15);
                 if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*\s*\(?/i', $after_dot)) {
                     $last_out_char = substr(rtrim($output), -1);
-                    if ($last_out_char === ')' || $last_out_char === '}' || preg_match('/[a-zA-Z0-9_]/', $last_out_char)) {
-                        $output .= "->"; continue;
-                    }
+					if ($last_out_char === ')' || $last_out_char === '}' || $last_out_char === ']' || preg_match('/[a-zA-Z0-9_]/', $last_out_char)) {
+						$output .= "->";
+						continue;
+					}
                 }
-            }                
+            }             
+			// [PQ FN GLOBAL] global @aaa, #bbb;
+			if ($inside_fn && $is_front_boundary && $char === 'g') {
+				$remain_global = substr($content, $i);
+				if (preg_match('/^global\s+(.+?)\s*;/is',$remain_global,$global_m)) {
+					$global_expr = trim($global_m[1]);
+					// fn 내부 global 선언 수집
+					$global_parts = preg_split('/\s*,\s*/', $global_expr);
+					foreach ($global_parts as $global_var) {
+						$global_var = trim($global_var);
+						if (preg_match('/^[@#$]([a-zA-Z_][a-zA-Z0-9_]*)$/', $global_var, $gm)) {
+							$fn_globals[$global_var[0] . $gm[1]] = true;
+						}
+					}
+					// PHP의 global 문장은 출력하지 않음
+					$i += strlen($global_m[0]) - 1;
+					continue;
+				}
+			}
             if ($char === '@') {
                 $remain = substr($content, $i + 1);
                 if (preg_match('/^(auth|app|url|db|http|session|form|date|time|file|text|cookie|trace)\.[a-zA-Z_]/i', $remain)) { 
                     $output .= '@'; 
                     continue; 
                 }
-                
-                list($expr, $i) = pq_parse_var($content, $i); 
-                $output .= '$' . $expr; 
-                continue;
+				list($expr, $i) = pq_parse_var($content, $i);
+				if ($inside_fn && isset($fn_globals['@' . $expr])) {
+					$output .= "\$GLOBALS['_FN']['{$expr}']";
+				} else {
+					$output .= '$' . $expr;
+				}
+				continue;
             }
+			// [PQ FN GLOBAL] Array variable
+			if ($char === '$' && $inside_fn) {
+				list($expr, $next_i) = pq_parse_array($content, $i);
+
+				if (preg_match('/^\$([a-zA-Z_][a-zA-Z0-9_]*)/', $expr, $gm)) {
+					$var_name = $gm[1];
+
+					if (isset($fn_globals['$' . $var_name])) {
+						$suffix = substr($expr, strlen('$' . $var_name));
+
+						$output .= "\$GLOBALS['_FN']['{$var_name}']" . $suffix;
+
+						// delimiter(; 등)를 건너뛰지 않도록
+						$i = $next_i - 1;
+
+						continue;
+					}
+				}
+			}				
             if ($char === '#' && $state === "NORMAL") {
                 $remain_hash = substr($content, $i + 1);
-
+				if ($inside_fn && preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)/', $remain_hash, $gm) && isset($fn_globals['#' . $gm[1]])) {
+					$var_name = $gm[1];
+					$output .= "\$GLOBALS['_FN']['{$var_name}']";
+					$i += strlen($var_name);
+					continue;
+				}
                 if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*session\.get\s*\((.*?)\)/i', $remain_hash, $m)) {
                     $var_name = $m[1];
                     $sess_arg = pq_compile_expr(trim($m[2]));
-                    
                     $output .= '$' . $var_name . ' = ($s_data = $session->get(' . $sess_arg . ')) ? (is_array($s_data) ? (object)$s_data : $s_data) : null';
-                    
                     $i += strlen('#' . $m[0]) - 1;
                     continue;
                 }
-
                 if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\[/i', $remain_hash, $m)) {
                     $var_name = $m[1];
                     $output .= '$' . $var_name . ' = (object)[';
                     $i += strlen('#' . $m[0]) - 1;
                     continue;
                 }
-
                 if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\./i', $remain_hash, $m) || 
                     preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[/i', $remain_hash, $m) || 
                     preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*obj\s*\(/i', $remain_hash, $m) || 
@@ -764,14 +774,14 @@ function perform_lexing($content) {
                     $i += (strlen($str_m[0]) - 1); continue;
                 }
             }
-			if ($char === '#') {
+            if ($char === '#') {
                 $remain = substr($content, $i);
                 if (preg_match('/^#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', $remain, $m)) {
                     $output .= '{$' . $m[1] . '->' . $m[2] . '}';
                     $i += (strlen($m[0]) - 1);
                     continue;
                 }
-            }			
+            }           
             if ($char === '@') {
                 $remain = substr($content, $i + 1, 15);
                 if (!preg_match('/^(auth|app|url|db|http|session|form|date|trace)\./i', $remain) && preg_match('/^[a-zA-Z_]/', $remain)) {
@@ -787,7 +797,6 @@ function perform_lexing($content) {
     }   
     return $output;
 }
-
 function perform_optimization($output) {
     $output = preg_replace(
         '/(\$form\s*->\s*get\s*\(.*?\)(?:->[a-zA-Z0-9_]+\s*\(.*?\))*)(?<!->value\(\))(?<!->int\(\))(?<!->string\(\))(?<!->bool\(\))(?<!->float\(\))(?<!->val\(\))(?<!->error\(\))(?<!->run\(\))\s*;/i',
@@ -803,10 +812,8 @@ function perform_optimization($output) {
     $output = preg_replace('/<\?php\s*=\s*/i', '<?= ', $output);
     $output = preg_replace('/;[ \t\n]*;/', ';', $output);
     $output = preg_replace_callback('/\(\$([a-zA-Z0-9_]+)\)->\{\$([a-zA-Z0-9_]+)\}/i', function($m) { return '$' . $m[1] . '->{' . $m[2] . '}'; }, $output);
-
     return $output;
 }
-
 function pq_guard($content) {
     return preg_replace_callback('~<pq>(.*?)</pq>~is', function ($m) {
         $inner = $m[1];
@@ -818,21 +825,17 @@ function pq_guard($content) {
         return '<pq>' . $safe_inner . '</pq>';
     }, $content);
 }
-
 function pq_log($section, $step, $msg){
     $GLOBALS['PQ_COMPILE_LOG'][$section][] = [ 'step' => $step, 'time' => microtime(true), 'msg'  => $msg ];
 }
-
 /**
  * [REQUIRED] DX Dashboard Error Rendering System
  */
 function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
     $error_file = $e->getFile(); $error_line = $e->getLine();
     $cache_name = basename($error_file, '.php');
-    
     $original_file = isset($GLOBALS['PQ_ROUTE_MAP'][$cache_name]) ? $GLOBALS['PQ_ROUTE_MAP'][$cache_name] : $current_file;
     $original_line = $error_line; 
-    
     if (file_exists($error_file)) {
         $file_lines = file($error_file);
         $target_line_content = isset($file_lines[$error_line - 1]) ? $file_lines[$error_line - 1] : '';
@@ -840,11 +843,9 @@ function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
             $original_line = (int)$matches[1];
         }
     }
-
     $err_msg = $e->getMessage();
     $hint_box = ""; 
     $pq_error_code = "PQ-E9999";
-
     if (strpos($err_msg, 'Cannot access offset of type string on string') !== false) {
         $pq_error_code = "PQ-E1001";
         $hint_box = "💡 <b>[Array Offset Error]</b> Attempted to access a string variable as an array using <code>['key']</code> or <code>[idx]</code>.<br>Check if the variable (e.g. <code>@row</code>, <code>$skin</code>) is a raw string instead of an array.";
@@ -870,11 +871,8 @@ function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
         $pq_error_code = "PQ-E1005";
         $hint_box = "💡 <b>[Object vs Array Access Error]</b> <code>#var</code> is an <b>Object</b>. Use Dot syntax <code>#item.key</code> instead of bracket (<code>['']</code>).";
     }
-
     $trace_lines = explode("\n", $e->getTraceAsString());
-
     echo "<div style='padding:25px; background:#1e1e24; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,0.4); font-family:\"Consolas\", \"Fira Code\", monospace; color:#e2e8f0; margin: 30px 20px 30px 280px; max-width:1100px; line-height:1.6; border:1px solid #2d2d39; word-break:break-all; text-align:left; clear: both; position: relative;'>";
-    
     echo "<div style='border-bottom:1px solid #3f3f46; padding-bottom:15px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between;'>";
     echo "  <div>";
     echo "    <span style='background:#ef4444; color:#fff; padding:3px 10px; border-radius:6px; font-weight:bold; font-size:12px; margin-right:10px;'>CRITICAL ERROR</span>";
@@ -882,37 +880,29 @@ function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
     echo "  </div>";
     echo "  <span style='background:#f43f5e; color:#fff; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:13px; letter-spacing:0.5px; box-shadow:0 4px 10px rgba(244,63,94,0.3);'>{$pq_error_code}</span>";
     echo "</div>";
-
     echo "<div style='background:#18181b; border:1px solid #27272a; padding:15px; border-radius:8px; margin-bottom:20px; font-size:13.5px; line-height:1.7;'>";
     echo "  <div style='color:#a1a1aa;'><span style='color:#38bdf8; font-weight:bold; width:120px; display:inline-block;'>📄 Template:</span> <span style='color:#e4e4e7; font-weight:bold;'>" . htmlspecialchars($original_file) . "</span></div>";
     echo "  <div style='color:#a1a1aa;'><span style='color:#eab308; font-weight:bold; width:120px; display:inline-block;'>⚙️ Compiled:</span> <span style='color:#a1a1aa; font-size:12px;'>" . htmlspecialchars($error_file) . "</span></div>";
     echo "  <div style='color:#a1a1aa; margin-top:4px;'><span style='color:#f43f5e; font-weight:bold; width:120px; display:inline-block;'>🎯 Target Line:</span> Please inspect source file at <strong style='color:#fff; background:#f43f5e; padding:2px 6px; border-radius:4px; font-size:14px;'>Line: " . $original_line . "</strong> (Cache line: {$error_line})</div>";
     echo "</div>";
-
     echo "<div style='background:#2d1a1e; border-left:4px solid #ef4444; padding:15px 20px; border-radius:8px; margin-bottom:20px; color:#fecaca;'>";
     echo "  <strong style='font-size:1.1rem; display:block;'>💬 " . htmlspecialchars($err_msg) . "</strong>";
     echo "</div>";
-
     if (!empty($hint_box)) {
         echo "<div style='background:#1e3a8a; border-left:4px solid #3b82f6; padding:12px 18px; border-radius:8px; margin-bottom:25px; color:#dbeafe; font-size:13.5px;'>{$hint_box}</div>";
     }
-
     if (!empty($original_file) && file_exists($original_file)) {
         echo "<h4 style='color:#eab308; margin-top:0; margin-bottom:12px; font-size:1.05rem; border-bottom:1px solid #3f3f46; padding-bottom:8px;'>🔍 Source Code Preview (Context)</h4>";
         echo "<div style='background:#141416; padding:15px; border-radius:8px; border:1px solid #27272a; margin-bottom:25px; font-size:13px; color:#a1a1aa; line-height:1.6;'>";
-        
         $src_lines = file($original_file);
         $start_scan = max(0, $original_line - 3);
         $end_scan = min(count($src_lines) - 1, $original_line + 1);
-        
         for ($line_idx = $start_scan; $line_idx <= $end_scan; $line_idx++) {
             $curr_num = $line_idx + 1;
             $line_content = rtrim($src_lines[$line_idx]);
             $is_target = ($curr_num === $original_line);
-            
             $bg_style = $is_target ? "background:#2d1a1e; color:#fca5a5; font-weight:bold; border-left:3px solid #ef4444; padding-left:5px;" : "padding-left:8px;";
             $num_color = $is_target ? "#ef4444" : "#71717a";
-            
             echo "<div style='display:flex; {$bg_style}'>";
             echo "  <span style='width:40px; color:{$num_color}; display:inline-block; text-align:right; margin-right:15px; user-select:none;'>{$curr_num} |</span>";
             echo "  <span style='white-space:pre-wrap; text-align:left;'>" . htmlspecialchars($line_content) . "</span>";
@@ -920,7 +910,6 @@ function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
         }
         echo "</div>";
     }
-
     echo "<h4 style='color:#38bdf8; margin-top:0; margin-bottom:12px; font-size:1.05rem; border-bottom:1px solid #3f3f46; padding-bottom:8px;'>📂 PHP Runtime Stack Trace</h4>";
     echo "<div style='background:#141416; padding:10px; border-radius:8px; border:1px solid #27272a; font-size:13px;'>";
     foreach ($trace_lines as $line) {
@@ -931,15 +920,13 @@ function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
     echo "</div>";
     echo "</div>";
 }
-
 function pq_dump_compile_log() {
     echo "<div style='padding:20px; text-align:center; color:#71717a; font-family:monospace;'>Compile Log Trace Complete.</div>";
 }
-
 if (!function_exists('pq_clean')) { function pq_clean($v) { return $v; } }
 if (!function_exists('pq_raw')) { function pq_raw($v) { return (string)$v; } }
 if (!function_exists('pq_attr')) { function pq_attr($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
 if (!function_exists('pq_html')) { function pq_html($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
 if (!function_exists('pq_script')) { function pq_script($v) { return json_encode($v); } }
 if (!function_exists('pq_style')) { function pq_style($v) { return preg_replace('/[^a-zA-Z0-9\s\#\.\:\;\-\,\(\)]/', '', $v); } }
-?>
+?> 
