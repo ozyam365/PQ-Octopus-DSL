@@ -470,10 +470,12 @@ write/edit page.
 ]]
 ```
 
-## What this example demonstrates ##
-- @ variables
-- # objects
-- $ collections
+## What this example demonstrates 
+```text
+@  variable
+#  object
+$  array
+```
 - Method chaining
 - Database queries
 - Form handling
