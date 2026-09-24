@@ -79,7 +79,7 @@ PQ combines familiar PHP concepts with concise syntax, chaining, utility functio
 
 > **Status:** Beta / Active Development
 
-📦 **[Download Full Installation Package (Google Drive)]([[PQ-Octopus-DSL download](https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO)]**
+📦 **[Download Full Installation Package (Google Drive)]([PQ-Octopus-DSL download](https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO)]**
 
 http://pqoctopus.com (Under construction)
 
@@ -355,7 +355,7 @@ PQ simply adds another option on top of it:
 
 The project is organized around a core engine and an extension system.
 
-```text
+
 ## Project Structure
 
 ```text
@@ -467,20 +467,21 @@ write/edit page.
 	inc "/path/html/bbs/skin/@skin_dir/bbs.pq";
 ]]
 
-What this example demonstrates
-@ variables
-# objects
-$ collections
-Method chaining
-Database queries
-Form handling
-Authentication and sessions
-Conditional statements
-switch / case
-pin() variable initialization
-Regular-expression utilities
-Dynamic file inclusion
-PHP interoperability
+** What this example demonstrates
+** @ variables
+** # objects
+** $ collections
+
+** Method chaining
+** Database queries
+** Form handling
+** Authentication and sessions
+** Conditional statements
+** switch / case
+** pin() variable initialization
+** Regular-expression utilities
+** Dynamic file inclusion
+** PHP interoperability
 
 
 ### Simple PQ Syntax Example
