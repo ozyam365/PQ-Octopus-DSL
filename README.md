@@ -69,7 +69,7 @@ db → where → row
 form → post → clean
 file → read → save
 http → get → json
-
+```
 
 **PQ Octopus DSL** is a lightweight PHP-based DSL designed to make web development simpler, more concise, and more practical.
 
