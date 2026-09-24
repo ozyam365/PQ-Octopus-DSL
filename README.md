@@ -1,5 +1,76 @@
 # PQ Octopus DSL
 
+## Redefining Modern PHP Development
+
+**Hide the object. Expose the operation.**  
+**Build the feature, not the architecture.**  
+**Structure when needed. Simplicity by default.**
+
+### PQ — A New Way to Build with PHP
+
+PQ is a DSL designed to make PHP development **simpler, more direct, and more focused on the work itself.**
+
+For years, software development has often revolved around classes, objects, controllers, services, repositories, models, layers, and boilerplate.
+
+Of course, there are situations where such structures are necessary.
+
+But there is a simple question worth asking:
+
+> **Does every application really need that much structure?**
+
+PQ takes a different approach.
+
+**The feature comes first. Structure is introduced only when the feature actually needs it.**
+
+If you need to work with a database, work with the database.
+
+If you need to process a form, process the form.
+
+If you need to read a file, read the file.
+
+If you need to make an HTTP request, make the request.
+
+PQ focuses on expressing **what the developer is actually trying to do**, rather than constantly exposing complex object structures.
+
+That is the idea behind:
+
+> **Hide the object. Expose the operation.**
+
+Objects can still be used internally when they are useful.
+
+Classes can be created when they are needed.
+
+Structures can be introduced when they provide real value.
+
+But **structure itself should never become the goal.**
+
+The goal of PQ is simple:
+
+> **Focus on what you are building.**
+
+---
+
+## The PQ Development Philosophy
+
+**Build the feature, not the architecture.**
+
+Do not make a feature complicated just to build an architecture around it.
+
+Create only as much structure as the application actually needs, and keep everything else simple.
+
+**Keep HTML as HTML.**
+
+Let PQ handle the program logic.
+
+Instead of adding complexity to the syntax, PQ focuses on connecting the operations developers actually perform.
+
+```text
+db → where → row
+form → post → clean
+file → read → save
+http → get → json
+# PQ Octopus DSL
+
 **PQ Octopus DSL** is a lightweight PHP-based DSL designed to make web development simpler, more concise, and more practical.
 
 PQ combines familiar PHP concepts with concise syntax, chaining, utility functions, and web-oriented features to reduce repetitive code and make application development easier to read and maintain.
