@@ -71,11 +71,6 @@ file → read → save
 http → get → json
 
 
-
-
-# PQ Octopus DSL
-
-
 **PQ Octopus DSL** is a lightweight PHP-based DSL designed to make web development simpler, more concise, and more practical.
 
 PQ combines familiar PHP concepts with concise syntax, chaining, utility functions, and web-oriented features to reduce repetitive code and make application development easier to read and maintain.
