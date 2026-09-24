@@ -372,10 +372,10 @@ PQ-Octopus-DSL/
 ├── run.php     # PQ entry point
 ├── init.pq     # PQ initialization
 └── tbl.pq      # Table-related definitions
-
+```
 
 ## Syntax Comparison
-
+```syntax
 | #  | Category              |              PHP             |               PQ           |
 |----|-----------------------|------------------------------|----------------------------|
 | 01 | Opening / Output      |   <?php echo "php"; ?>       |      [[ print "pq"; ]]     |
@@ -392,6 +392,8 @@ PQ-Octopus-DSL/
 | 12 | Function              |    function name() {}        |       fn name() {}         |
 | 13 | Comment               |        # comment             |       ## comment           |
 | 14 | Control Flow          |    if($a > 1) {} else {}     |   if(@a > 1): else: endif; |
+
+```
 
 > **PQ Reference**
 >
@@ -466,6 +468,7 @@ write/edit page.
 
 	inc "/path/html/bbs/skin/@skin_dir/bbs.pq";
 ]]
+```
 
 ** What this example demonstrates
 ** @ variables
