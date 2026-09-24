@@ -470,21 +470,21 @@ write/edit page.
 ]]
 ```
 
-** What this example demonstrates
-> @ variables
-> # objects
-> $ collections
+### What this example demonstrates ###
+>@ variables
+># objects
+>$ collections
 >
-> Method chaining
-> Database queries
-> Form handling
-> Authentication and sessions
-> Conditional statements
-> switch / case
-> pin() variable initialization
-> Regular-expression utilities
-> Dynamic file inclusion
-> PHP interoperability
+>Method chaining
+>Database queries
+>Form handling
+>Authentication and sessions
+>Conditional statements
+>switch / case
+>pin() variable initialization
+>Regular-expression utilities
+>Dynamic file inclusion
+>PHP interoperability
 
 
 ### Simple PQ Syntax Example
