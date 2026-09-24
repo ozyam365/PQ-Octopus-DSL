@@ -528,7 +528,8 @@ A simple CRUD example demonstrating form handling, variables, arrays, database o
     endswitch;
 ]]
 ```
-Why Is Python and Node.js Gaining Ground?
+
+Why Are Python and Node.js Gaining Ground?
 Python and Node.js continue to attract developers across a wide range of fields.
 Have we really stopped to ask why?
 Is it simply about language syntax?
