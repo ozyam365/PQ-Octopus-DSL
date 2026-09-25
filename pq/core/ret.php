@@ -1,7 +1,7 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ VERSION (BETA VERSION 9.1.8)
  * FILENAME  : /pq/core/ret.php  
  * COMPONENT : PQ Core Ret (Data Type Return & Conversion)
  * =========================================================

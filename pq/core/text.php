@@ -1,7 +1,7 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ VERSION (BETA VERSION 9.1.8)
  * FILENAME  : /pq/core/text.php 
  * COMPONENT : PQ Engine Text Matrix Core Engine
  * =========================================================
@@ -31,7 +31,7 @@ class PQText {
      */
     public function filter(string $cond): self {
         $p = str_replace(['~', ','], ['-', ''], $cond);
-        if (!str_contains($cond, ' ')) {
+        if (str_contains($cond, ' ')) {
             $p = str_replace(' ', '', $p);
         }
         $this->rgx_cond = $p;
@@ -204,12 +204,15 @@ class PQText {
 
     /** Strip characters outside allowed range */
     public function clean(): string {
-        return $this->apply_mode(preg_replace("/[^{$this->rgx_cond}]/u", '', $this->target_val));
+        if ($this->rgx_cond === '') return $this->apply_mode($this->target_val);
+        $res = preg_replace('/[' . $this->rgx_cond . ']/u', '', $this->target_val);
+        return $this->apply_mode($res ?? $this->target_val);
     }
 
     /** Extract characters within allowed range */
     public function find(): string {
-        preg_match_all("/[{$this->rgx_cond}]/u", $this->target_val, $matches);
+        if ($this->rgx_cond === '') return $this->apply_mode('');
+        preg_match_all('/[' . $this->rgx_cond . ']/u', $this->target_val, $matches);
         return $this->apply_mode(implode('', $matches[0] ?? []));
     }
 
@@ -226,24 +229,44 @@ class PQText {
         return [];
     }
 
-    /** Replace regex matched portions */
-    public function replace(string $char): string {
-        return $this->apply_mode(preg_replace("/[{$this->rgx_cond}]/u", $char, $this->target_val));
+	public function replace(mixed $searchOrPattern, ?string $replace = null): self {
+        if ($replace !== null) {
+            $pattern = (string)$searchOrPattern;
+            
+            // 정규식 구분자(/)가 명확히 붙어있는 패턴인지 확인
+            if (preg_match('/^\/.*\/[a-z]*$/i', $pattern)) {
+                $res = @preg_replace($pattern, $replace, $this->target_val);
+            } else {
+                // 단순 문자열 치환
+                $res = str_replace($pattern, $replace, $this->target_val);
+            }
+            $this->target_val = $res ?? $this->target_val;
+        } else {
+            // filter() 조건 기반 치환
+            if ($this->rgx_cond !== '') {
+                $res = @preg_replace('/[' . $this->rgx_cond . ']/u', (string)$searchOrPattern, $this->target_val);
+                $this->target_val = $res ?? $this->target_val;
+            }
+        }
+        return $this;
     }
 
     /** Count regex matches */
     public function count(): int {
-        return (int)preg_match_all("/[{$this->rgx_cond}]/u", $this->target_val, $matches);
+        if ($this->rgx_cond === '') return 0;
+        return (int)preg_match_all('/[' . $this->rgx_cond . ']/u', $this->target_val, $matches);
     }
 
     /** Extract first or last matched character */
     public function first(): string {
-        preg_match("/[{$this->rgx_cond}]/u", $this->target_val, $match);
+        if ($this->rgx_cond === '') return $this->apply_mode('');
+        preg_match('/[' . $this->rgx_cond . ']/u', $this->target_val, $match);
         return isset($match[0]) ? $this->apply_mode($match[0]) : '';
     }
 
     public function last(): string {
-        preg_match_all("/[{$this->rgx_cond}]/u", $this->target_val, $matches);
+        if ($this->rgx_cond === '') return $this->apply_mode('');
+        preg_match_all('/[' . $this->rgx_cond . ']/u', $this->target_val, $matches);
         return (!empty($matches[0])) ? $this->apply_mode(end($matches[0])) : '';
     }
 
@@ -294,12 +317,13 @@ class PQText {
         return mb_strlen($this->target_val, 'UTF-8');
     }
 
-    public function empty(): bool {
+    /** Renamed from empty() to isEmpty() due to PHP keyword restrictions */
+    public function isEmpty(): bool {
         return trim($this->target_val) === '';
     }
 
     public function val(string $default = ""): string {
-        if ($this->empty()) {
+        if ($this->isEmpty()) {
             return $default;
         }
         return $this->apply_mode($this->target_val);
@@ -309,7 +333,8 @@ class PQText {
         return $this->apply_mode($this->target_val);
     }
 
-    private function apply_mode(string $s): string {
+    private function apply_mode(?string $s): string {
+        $s = $s ?? '';
         if ($this->on_mode === 'lower') return mb_strtolower($s, 'UTF-8');
         if ($this->on_mode === 'upper') return mb_strtoupper($s, 'UTF-8');
         return $s;

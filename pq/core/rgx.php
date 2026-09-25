@@ -1,7 +1,7 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ VERSION (BETA VERSION 9.1.8)
  * FILENAME  : /pq/core/rgx.php
  * COMPONENT : PQ Fluent Regex Builder Core Engine
  * =========================================================
@@ -58,8 +58,11 @@ class Rgx {
         return $this;
     }
 
+    public function rep($search, $replace = null) {
+        return $this->replace($search, $replace);
+    }
+
     public function type($names) {
-        // Multi-type support separated by comma (e.g., type("eng,int"))
         $name_list = array_map('trim', explode(',', $names));
         $merged_chars = '';
 
@@ -73,7 +76,7 @@ class Rgx {
         if ($merged_chars !== '') {
             if ($this->is_not) {
                 $this->patterns[] = '[^' . $merged_chars . ']';
-                $this->is_not = false; // Reset toggle
+                $this->is_not = false;
             } else {
                 $this->patterns[] = '[' . $merged_chars . ']';
             }
@@ -116,7 +119,6 @@ class Rgx {
         if ($last_idx >= 0) {
             $target = $this->patterns[$last_idx];
             
-            // Group isolation safety guard
             if (strlen($target) > 1 && !preg_match('/^\[.*\]$/', $target) && !preg_match('/^\(.*\)$/', $target)) {
                 $target = '(?:' . $target . ')';
             }
@@ -191,13 +193,41 @@ class Rgx {
         return $this;
     }
 
-    public function match($target = null){
-        if ($target !== null) {
-            $this->target = $target;
+    /** 
+     * 하이브리드 매칭 메서드 (통합 수정본)
+     * 지원 패턴:
+     * 1) rgx($target)->symbol("\n")->match()
+     * 2) rgx($target)->match('/pattern/')
+     * 3) rgx('/pattern/')->match($target)
+     */
+    public function match($input = null): bool {
+        if ($input !== null) {
+            // 인자로 들어온 게 정규식 패턴('/.../' 또는 '~...~')인 경우
+            if (is_string($input) && (str_starts_with($input, '/') || str_starts_with($input, '~'))) {
+                return (bool)preg_match($input, (string)$this->target);
+            }
+            // 패턴이 아니라 대상 문자열일 경우 $target으로 갱신
+            $this->target = $input;
         }
 
         $regex = $this->compile();
-        return (bool)preg_match($regex, $this->target);
+        return (bool)preg_match($regex, (string)$this->target);
+    }
+
+    /** 단일 매칭 문자열 추출 */
+    public function find(string $pattern = ''): string {
+        if (empty($this->target)) return "";
+        
+        if ($pattern === '') {
+            $pattern = $this->compile();
+        } elseif (substr($pattern, 0, 1) !== substr($pattern, -1)) {
+            $pattern = '/' . preg_quote($pattern, '/') . '/i';
+        }
+
+        if (preg_match($pattern, $this->target, $matches)) {
+            return $matches[0] ?? "";
+        }
+        return "";
     }
 
     public function get($target = null){
@@ -211,7 +241,10 @@ class Rgx {
         return $matches[0] ?? [];
     }
 
-    public function replace($replacement) {
+    public function replace($replacement, $target = null) {
+        if ($target !== null) {
+            $this->target = $target;
+        }
         $regex = $this->compile();
         return preg_replace($regex, $replacement, $this->target);
     }
