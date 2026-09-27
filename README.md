@@ -542,3 +542,16 @@ A simple CRUD example demonstrating form handling, variables, arrays, database o
 >
 >Perhaps the question is not only how to make PHP more powerful,
 >but how to make PHP development more direct, practical, and enjoyable.
+>
+>Programming Languages Should Be Fly-by-Wire
+Modern programming languages should work like Fly-by-Wire systems.
+In the past, controlling an aircraft meant directly manipulating mechanical control systems. Modern aircraft instead translate the pilot's intent into control commands through sophisticated flight-control computers.
+Programming can work the same way.
+Developers should not have to manually manage every internal object, structure, and execution detail just to build a feature.
+
+Developers express what they want to do.
+The engine handles how it is executed.
+
+PQ follows this idea:
+
+Hide the object. Expose the operation.
