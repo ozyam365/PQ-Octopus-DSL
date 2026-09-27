@@ -534,25 +534,21 @@ A simple CRUD example demonstrating form handling, variables, arrays, database o
 ]]
 ```
 
-Programming Languages Should Be Fly-by-Wire
-Modern programming languages should work more like Fly-by-Wire systems.
-In the past, controlling an aircraft meant directly manipulating mechanical control systems. Modern aircraft instead translate the pilot's intent into control commands through sophisticated flight-control computers.
-Programming can work the same way.
-Developers should not have to manually manage every internal object, structure, and execution detail just to build a feature.
+### Programming Languages Should Be Fly-by-Wire
+Modern programming languages should work more like **Fly-by-Wire** systems.
 
->Developers express what they want to do.
->The engine handles how it is executed.
+In the past, controlling an aircraft meant directly manipulating mechanical control systems. Modern aircraft instead translate the pilot's intent into control commands through sophisticated flight-control computers. 
 
-PQ follows this idea:
+Programming can work the same way. Developers should not have to manually manage every internal object, structure, and execution detail just to build a feature.
 
-Hide the object. Expose the operation.
+> **Developers express what they want to do. The engine handles how it is executed.**
 
->Why Are Python and Node.js Gaining Ground?
->Python and Node.js continue to attract developers across a wide range of fields.
->Have we really stopped to ask why?
->Is it simply about language syntax?
->Or is it also about how developers experience building software?
->
->Perhaps the question is not only how to make PHP more powerful,
->but how to make PHP development more direct, practical, and enjoyable.
+PQ follows this core idea:
+* **Hide the object. Expose the operation.**
 
+---
+
+### Why Are Python and Node.js Gaining Ground?
+Python and Node.js continue to attract developers across a wide range of fields. Have we really stopped to ask why? Is it simply about language syntax? Or is it also about how developers experience building software?
+
+Perhaps the question is not only how to make PHP more powerful, but **how to make PHP development more direct, practical, and enjoyable.**
