@@ -1,31 +1,31 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * Pre-Processor Pipeline & Translation Stages
  * FILENAME  : /pq/engine/ready.php
- * COMPONENT : Pre-Processor Pipeline & Translation Stages
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
 $root_path = dirname(__DIR__, 1);
 
 // [REQUIRED] Core Module Dependencies
-include_once $root_path . "/core/auth.php"; 
+include_once $root_path . "/core/auth.php";
 include_once $root_path . "/core/cookie.php";
 include_once $root_path . "/core/date.php";
 include_once $root_path . "/core/db.php";
-include_once $root_path . "/core/excel.php"; 
+include_once $root_path . "/core/excel.php";
 include_once $root_path . "/core/file.php";
-include_once $root_path . "/core/form.php"; 
+include_once $root_path . "/core/form.php";
 include_once $root_path . "/core/func.php";
 include_once $root_path . "/core/html.php";
 include_once $root_path . "/core/http.php";
-include_once $root_path . "/core/list.php"; 
-include_once $root_path . "/core/object.php"; 
-include_once $root_path . "/core/pin.php"; 
-include_once $root_path . "/core/pq.php"; 
-include_once $root_path . "/core/ret.php"; 
-include_once $root_path . "/core/rgx.php"; 
+include_once $root_path . "/core/list.php";
+include_once $root_path . "/core/object.php";
+include_once $root_path . "/core/pin.php";
+include_once $root_path . "/core/pq.php";
+include_once $root_path . "/core/ret.php";
+include_once $root_path . "/core/rgx.php";
 include_once $root_path . "/core/session.php";
 include_once $root_path . "/core/text.php";
 include_once $root_path . "/core/trace.php";
@@ -34,23 +34,23 @@ include_once $root_path . "/core/util.php";
 // [CONFIG] Core Helper Bridge Mapping
 if (!defined('PQ_RESERVED_MAP')) {
     define('PQ_RESERVED_MAP', [
-        'db'      => '$db->', 
-        'session' => '$session->', 
-        'cookie'  => '$cookie->', 
+        'db'      => '$db->',
+        'session' => '$session->',
+        'cookie'  => '$cookie->',
         'http'    => '$http->',
-        'file'    => 'file_pq()->', 
-        'form'    => '$form->', 
-        'date'    => '$date->', 
+        'file'    => 'file_pq()->',
+        'form'    => '$form->',
+        'date'    => '$date->',
         'time'    => '$time->',
-        'text'    => '$text->', 
-        'ai'      => '$ai->', 
-        'iot'     => '$iot->', 
+        'text'    => '$text->',
+        'ai'      => '$ai->',
+        'iot'     => '$iot->',
         'app'     => '$app->',
         'html'    => '$html->',
-        'auto'    => '$auto->', 
-        'util'    => '$util->', 
-        'pdf'     => '$pdf->', 
-        'excel'   => '$excel->', 
+        'auto'    => '$auto->',
+        'util'    => '$util->',
+        'pdf'     => '$pdf->',
+        'excel'   => '$excel->',
         'trace'   => 'Trace::'
     ]);
 }
@@ -61,7 +61,7 @@ if (!defined('PQ_SEMICOLON_BYPASS')) {
 }
 
 if (!isset($cookie)) {
-    $cookie = new PQCookie(); 
+    $cookie = new PQCookie();
 }
 
 /**
@@ -144,11 +144,11 @@ function pq_stage_object_scope($code) {
 
 function pq_stage_reserved_chain($code) {
     $code = preg_replace('/have\\s+([a-zA-Z_]+)(?:\\[([0-9]+)\\])?\\s*;/i', 'PQEngine::register_component("$1", "$2");', $code);
-    
+
     foreach (PQ_RESERVED_MAP as $r => $bridge) {
         $code = preg_replace(
-            '/(?<![\$a-zA-Z0-9_])' . preg_quote($r, '/') . '\.([a-zA-Z_][a-zA-Z0-9_]*)/i', 
-            $bridge . '$1', 
+            '/(?<![\$a-zA-Z0-9_])' . preg_quote($r, '/') . '\.([a-zA-Z_][a-zA-Z0-9_]*)/i',
+            $bridge . '$1',
             $code
         );
     }
@@ -160,7 +160,7 @@ function pq_stage_sanctuary($code, &$pq_blocks, &$strings, &$html_comments) {
         '/<pq\b[^>]*>(.*?)<\/pq>/is',
         function($m) use (&$pq_blocks){
             $id = '__PQ_BLOCK_' . count($pq_blocks) . '__';
-            $pq_blocks[$id] = base64_encode($m[1]); 
+            $pq_blocks[$id] = base64_encode($m[1]);
             return $id;
         },
         $code
@@ -170,17 +170,17 @@ function pq_stage_sanctuary($code, &$pq_blocks, &$strings, &$html_comments) {
 function pq_stage_restore($code, $pq_blocks, $strings, $html_comments) {
     foreach ($strings as $id => $val) $code = str_replace($id, $val, $code);
     $code = preg_replace('/(?<!->)trace\\(/i', 'Trace::add(', $code);
-    
+
     foreach ($pq_blocks as $block_id => $b64_content) {
         $raw_inner = base64_decode($b64_content);
         $compiled_pq = "<pq><?php echo '" . str_replace("'", "\\'", htmlspecialchars(htmlspecialchars_decode($raw_inner, ENT_QUOTES), ENT_QUOTES, 'UTF-8')) . "'; ?></pq>";
         $code = str_replace($block_id, $compiled_pq, $code);
     }
-    
+
     foreach (array_reverse($html_comments, true) as $comment_id => $original_comment) {
         $code = str_replace($comment_id, $original_comment, $code);
     }
-    
+
     // [SECURITY] Restricted PHP Functions Guard
     $dangerous = ['system', 'exec', 'passthru', 'shell_exec', 'popen', 'proc_open', 'eval', 'assert'];
     foreach ($dangerous as $fn) {

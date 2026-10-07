@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * Cookie Core Module
  * FILENAME  : /pq/core/cookie.php 
- * COMPONENT : PQ Pure Cookie Matrix
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
 

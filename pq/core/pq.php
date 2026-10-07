@@ -1,15 +1,16 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ System Utilities & Core Namespace Engine
  * FILENAME  : /pq/core/pq.php
- * COMPONENT : PQ System Utilities & Core Namespace Engine
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
 class PQCore {
     private static $instance = null;
-
+	private $loaded_plugins = [];
+	
     public static function getInstance() {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -21,27 +22,31 @@ class PQCore {
      * PQ DSL Plugin Loader Pipeline
      * Usage: pq().use("chat") or pq().use("chat").use("api") or pq().use(["chat", "api"])
      */
-    public function use($plugin_name) {
-        if (is_array($plugin_name)) {
-            foreach ($plugin_name as $p) {
-                $this->use($p);
-            }
-            return $this;
-        }
+		public function use($plugin_name) {
+			if (is_array($plugin_name)) {
+				foreach ($plugin_name as $p) {
+					$this->use($p);
+				}
+				return $this;
+			}
 
-        // Internal plugin loader invocation
-        if (function_exists('plugin_load')) {
-            plugin_load($plugin_name);
-        } else {
-            $plugin_path = defined('PQ_PATH') ? PQ_PATH . "/plugin/{$plugin_name}.php" : __DIR__ . "/../plugin/{$plugin_name}.php";
-            if (file_exists($plugin_path)) {
-                require_once $plugin_path;
-            }
-        }
+			if (!isset($this->loaded_plugins[$plugin_name])) {
+				if (function_exists('plugin_load')) {
+					plugin_load($plugin_name);
+				} else {
+					$plugin_path = defined('PQ_PATH') 
+						? PQ_PATH . "/plugin/{$plugin_name}.php" 
+						: __DIR__ . "/../plugin/{$plugin_name}.php";
+						
+					if (file_exists($plugin_path)) {
+						require_once $plugin_path;
+					}
+				}
+				$this->loaded_plugins[$plugin_name] = true;
+			}
 
-        return $this;
-    }
-
+			return $this;
+		}
     /**
      * Exception thrower
      */

@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ PDF Generator Core Plugin (TCPDF Bridge)
  * FILENAME  : /pq/plugin/pdf.php
- * COMPONENT : PQ PDF Generator Core Plugin (TCPDF Bridge)
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 

@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.8)
+ * PQ Fluent Regex Builder Core Engine
  * FILENAME  : /pq/core/rgx.php
- * COMPONENT : PQ Fluent Regex Builder Core Engine
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 

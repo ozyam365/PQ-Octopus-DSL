@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.8)
+ * PQ Engine Text Matrix Core Engine
  * FILENAME  : /pq/core/text.php 
- * COMPONENT : PQ Engine Text Matrix Core Engine
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 

@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Core Pin (Variable Binding & Data Processing)
  * FILENAME  : /pq/core/pin.php  
- * COMPONENT : PQ Core Pin (Variable Binding & Data Processing)
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 

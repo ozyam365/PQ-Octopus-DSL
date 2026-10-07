@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ *  PQ Core Helper Functions & Collection Matrix
  * FILENAME  : /pq/core/func.php  
- * COMPONENT : PQ Core Helper Functions & Collection Matrix
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
 

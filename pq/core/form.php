@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * Core module for PQ form-related processing
  * FILENAME  : /pq/core/form.php  
- * COMPONENT : PQ Pure Raw Form Matrix & Auto-Fallback Type Cast
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
 

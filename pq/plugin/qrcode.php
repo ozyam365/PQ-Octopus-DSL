@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ QR-Code Generator Core Plugin
  * FILENAME  : /pq/plugin/qrcode.php
- * COMPONENT : PQ QR-Code Generator Core Plugin
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
@@ -45,14 +45,14 @@ class PQ_QRCode_Engine {
         if (empty($this->data_text)) {
             return "[QR Engine Error] Missing required text or URL payload for encoding.";
         }
-        
+
         $api_url = "https://chart.googleapis.com/chart?cht=qr&chs={$this->size_px}x{$this->size_px}&chl={$this->data_text}";
         $html = '<img src="' . $api_url . '" class="pq-qrcode-img img-fluid shadow-sm rounded border p-2 bg-white" alt="PQ QRCode">';
-        
+
         // Reset internal state buffer to prevent singleton state pollution
         $this->data_text = '';
         $this->size_px = 150;
-        
+
         return $html;
     }
 }
@@ -73,8 +73,8 @@ if (!function_exists('qrcode_pq')) {
 }
 
 if (!function_exists('qrcode')) {
-    function qrcode() { 
-        return qrcode_pq(); 
+    function qrcode() {
+        return qrcode_pq();
     }
 }
 ?>

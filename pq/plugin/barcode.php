@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Barcode Generator Core Plugin
  * FILENAME  : /pq/plugin/barcode.php
- * COMPONENT : PQ Barcode Generator Core Plugin
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
@@ -48,13 +48,13 @@ class PQ_Barcode_Engine {
 
         $target_format = strtolower($this->format);
         $api_url = "https://metafloor.com" . $target_format . "&text={$this->barcode_val}&includeheight=1";
-        
+
         $html = '<img src="' . $api_url . '" class="pq-barcode-img img-fluid shadow-sm rounded border p-2 bg-white" alt="PQ Barcode">';
-        
+
         // Reset state buffers
         $this->barcode_val = '';
         $this->format = 'CODE128';
-        
+
         return $html;
     }
 }

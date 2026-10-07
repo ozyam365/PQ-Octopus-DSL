@@ -1,10 +1,10 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.8)
+ * PQ Core Ret (Data Type Return & Conversion)
  * FILENAME  : /pq/core/ret.php  
- * COMPONENT : PQ Core Ret (Data Type Return & Conversion)
- * =========================================================
+ * UPDATE :  2026-10-07 PM 07:01
+  * =========================================================
  */
 
 class PQRet implements IteratorAggregate, ArrayAccess, Countable {

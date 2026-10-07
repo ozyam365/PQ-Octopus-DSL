@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Engine Scoper Kernel (v1.4.0 - Hybrid Scoper & Data Container)
  * FILENAME  : /pq/core/object.php
- * COMPONENT : PQ Engine Scoper Kernel (v1.4.0 - Hybrid Scoper & Data Container)
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
@@ -19,7 +19,7 @@ class PQEngine {
      */
     public static function start_object_scope($root_obj_name, $clear_registry = false) {
         self::$scope_stack = []; // Reset scope stack
-        
+
         if ($clear_registry) {
             self::$registry = []; // Optional registry initialization
         }
@@ -31,7 +31,7 @@ class PQEngine {
             'parent'    => null
         ];
         self::$current_context = $root_obj_name;
-        
+
         if (class_exists('Trace')) Trace::add("SCOPE", "Root -> {$root_obj_name}");
     }
 
@@ -50,7 +50,7 @@ class PQEngine {
             'full_path' => $current_path,
             'parent'    => $parent_path
         ];
-        
+
         self::$current_context = $current_path;
         if (class_exists('Trace')) Trace::add("SCOPE", "Child -> {$current_path}");
     }
@@ -60,7 +60,7 @@ class PQEngine {
      */
     public static function end_scope() {
         $popped = array_pop(self::$scope_stack);
-        
+
         if (!empty(self::$scope_stack)) {
             self::$current_context = end(self::$scope_stack)['full_path'];
         } else {
@@ -212,15 +212,15 @@ class PQObjectEngine implements ArrayAccess {
         if (array_key_exists($offset, $this->data)) {
             return $this->data[$offset];
         }
-        
+
         $scope = PQEngine::get_current_scope();
         if ($scope) {
             PQEngine::end_scope();
             $new_name = $scope['name'];
-            $new_index = ($scope['index'] !== null && $scope['index'] !== '') 
-                ? $scope['index'] . '][' . $offset 
+            $new_index = ($scope['index'] !== null && $scope['index'] !== '')
+                ? $scope['index'] . '][' . $offset
                 : $offset;
-            
+
             PQEngine::enter_child_scope($scope['parent'], $new_name, $new_index);
         }
         $this->current_path = PQEngine::get_current_context();
@@ -236,7 +236,7 @@ class PQObjectEngine implements ArrayAccess {
      */
     public function __call($method, $args) {
         $context = PQEngine::get_current_context();
-        
+
         // Guard against null context execution
         $target_key = $context ? $context . '.' . $method : $method;
 

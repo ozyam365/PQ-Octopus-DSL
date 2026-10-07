@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Mobile UI Component Matrix Plugin
  * FILENAME  : /pq/plugin/app.php
- * COMPONENT : PQ Mobile UI Component Matrix Plugin
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
@@ -15,7 +15,7 @@ class PqPluginApp {
     private $b_badge = "";
     private $b_icon = "";
     private $b_shadow = false;
-    private $b_style = []; 
+    private $b_style = [];
 
     /**
      * Singleton Instance Factory
@@ -36,8 +36,8 @@ class PqPluginApp {
         $this->b_badge = "";
         $this->b_icon = "";
         $this->b_shadow = false;
-        $this->b_style = []; 
-        return $this; 
+        $this->b_style = [];
+        return $this;
     }
 
     /**
@@ -81,7 +81,7 @@ class PqPluginApp {
         } else if (is_string($style_input)) {
             $this->b_style = ['card' => $style_input];
         }
-        return $this; 
+        return $this;
     }
 
     /**
@@ -92,15 +92,15 @@ class PqPluginApp {
         $result = [];
         $raw_items = [];
 
-        if (is_array($menu_data)) { 
-            $raw_items = $menu_data; 
+        if (is_array($menu_data)) {
+            $raw_items = $menu_data;
         } else {
             $items = explode(',', $menu_data);
-            foreach ($items as $item) { 
-                $raw_items[] = explode(':', trim($item)); 
+            foreach ($items as $item) {
+                $raw_items[] = explode(':', trim($item));
             }
         }
-        
+
         $current_uri = $_SERVER['PATH_INFO'] ?? parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
         $current_path = '/' . trim(str_replace('/pq365', '', $current_uri), '/');
 
@@ -114,7 +114,7 @@ class PqPluginApp {
                 $link = "#";
                 $icon = "";
             }
-            
+
             if ($link === '#' || empty($link)) { $link = "javascript:void(0);"; }
 
             if (empty($icon)) {
@@ -128,11 +128,11 @@ class PqPluginApp {
 
             $clean_link_path = '/' . trim(str_replace('/pq365', '', parse_url($link, PHP_URL_PATH)), '/');
             $is_active = ($clean_link_path === $current_path) || ($current_path === '/m' && $clean_link_path === '/m');
-            
+
             $result[] = (object)[
-                'name'   => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'), 
-                'link'   => $link, 
-                'icon'   => htmlspecialchars($icon, ENT_QUOTES, 'UTF-8'), 
+                'name'   => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
+                'link'   => $link,
+                'icon'   => htmlspecialchars($icon, ENT_QUOTES, 'UTF-8'),
                 'active' => $is_active
             ];
         }
@@ -249,9 +249,9 @@ class PqPluginApp {
 
 class PQFooterBuilder {
     private $theme = "";
-    private $activeColor = "text-primary"; 
+    private $activeColor = "text-primary";
     private $menus = [];
-    
+
     public function add($title, $url, $icon = "") {
         $this->menus[] = [
             'title' => $title,
@@ -260,7 +260,7 @@ class PQFooterBuilder {
         ];
         return $this;
     }
-    
+
     public function __toString() {
         $app = pq_app();
         $menu_data = [];
@@ -280,11 +280,11 @@ class PQSidebarBuilder {
     private $activeColor = "text-primary";
     private $user_name;
     private $menus = [];
-    
+
     public function __construct($user_name) {
         $this->user_name = $user_name;
     }
-    
+
     public function add($title, $url, $icon = "") {
         $this->menus[] = [
             $title,
@@ -293,23 +293,23 @@ class PQSidebarBuilder {
         ];
         return $this;
     }
-    
+
     public function theme($theme) {
         $this->theme = (string)$theme;
         return $this;
     }
-    
+
     public function activeColor($color) {
         $this->activeColor = (string)$color;
         return $this;
-    }    
-    
+    }
+
     public function __toString() {
         $app = pq_app();
         $html = $app->sidebar(
             $this->user_name,
             $this->menus
-        );        
+        );
         if ($this->theme == "dark") {
             $html = str_replace("bg-dark", "bg-dark text-white", $html);
         }
@@ -319,13 +319,13 @@ class PQSidebarBuilder {
         if ($this->activeColor) {
             $html = str_replace("text-primary", $this->activeColor, $html);
         }
-        return $html;        
+        return $html;
     }
 }
 
 class PQMenuGroupBuilder {
     private $menus = [];
-    
+
     public function add(
         $title,
         $url,
@@ -344,7 +344,7 @@ class PQMenuGroupBuilder {
         ];
         return $this;
     }
-    
+
     public function __toString() {
         $html = '<div class="list-group shadow-sm rounded-3 overflow-hidden">';
         foreach ($this->menus as $m) {
@@ -369,11 +369,11 @@ class PQMenuGroupBuilder {
 class PQDrawerBuilder {
     private $title;
     private $buttons = [];
-    
+
     public function __construct($title) {
         $this->title = $title;
     }
-    
+
     public function button($text, $icon = "", $color = "dark") {
         $this->buttons[] = [
             'text'  => $text,
@@ -382,7 +382,7 @@ class PQDrawerBuilder {
         ];
         return $this;
     }
-    
+
     public function __toString() {
         $html = '<div class="list-group list-group-flush">';
         foreach ($this->buttons as $btn) {
@@ -403,14 +403,14 @@ class PQDrawerBuilder {
 // --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
 
 if (!function_exists('pq_app')) {
-    function pq_app() { 
-        return PqPluginApp::getInstance(); 
+    function pq_app() {
+        return PqPluginApp::getInstance();
     }
 }
 
 if (!function_exists('app_pq')) {
-    function app_pq() { 
-        return pq_app(); 
+    function app_pq() {
+        return pq_app();
     }
 }
 

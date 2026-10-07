@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ HTTP Client & Browser Controller Engine
  * FILENAME  : /pq/core/http.php  
- * COMPONENT : PQ HTTP Client & Browser Controller Engine
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
 

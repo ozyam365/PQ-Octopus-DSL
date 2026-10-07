@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Engine Pagination & Search Matrix Core
  * FILENAME  : /pq/core/list.php  
- * COMPONENT : PQ Engine Pagination & Search Matrix Core
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
 

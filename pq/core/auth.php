@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * User Level Management Core Module
  * FILENAME  : /pq/core/auth.php
- * COMPONENT : Role-Based Access Control (RBAC) & PQAuth Core Module
+ * UPDATE :  2026-10-07 PM 07:01 
  * =========================================================
  * 
  * [USER CONFIG] User Level Policy Mapping

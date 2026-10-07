@@ -1,16 +1,16 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.8)
+ * PQ Engine Fluent Router Core
  * FILENAME  : /pq/engine/router.php
- * COMPONENT : PQ Engine Fluent Router Core
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
 class PQRouter {
     private static $map = [];
     private static $current_uri = '/';
-    private static $groupStack = []; 
+    private static $groupStack = [];
 
     // [CONFIG] Register Route Rule
     public static function set($path, $file,$type = 'page') {
@@ -37,14 +37,14 @@ class PQRouter {
     public static function run() {
         $current_path = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $base_path = dirname($_SERVER['SCRIPT_NAME']);
-        
+
         if ($base_path &&$base_path !== '/') {
             if (strpos($current_path, $base_path) === 0) {$current_path = substr($current_path, strlen($base_path));
             }
         }
-        
-        $current_path = '/' . trim((string)$current_path, '/');     
-  
+
+        $current_path = '/' . trim((string)$current_path, '/');
+
         if ($current_path === '/') {$current_path = '/index';
         }
 
@@ -63,39 +63,39 @@ class PQRouter {
             $rgx = preg_quote($pattern, '#');
             $rgx = preg_replace('/\\\\:(\w+)/', '(?P<$1>[^/]+)',$rgx);
             if (preg_match("#^$rgx$#", $current_path,$matches)) {
-                foreach ($matches as $k =>$v) {                
+                foreach ($matches as $k =>$v) {
                     if (is_string($k)) {$GLOBALS[$k] =$v;
                         $_GET[$k] =$v;
                         $_REQUEST[$k] =$v;
                         $target_file = str_replace(":$k", $v,$target_file);
                     }
-                }               
+                }
                 return [
                     'file' => $target_file,
                     'type' => $route_type
                 ];
             }
         }
-        return false; 
+        return false;
     }
 
     // [CUSTOM] Active Navigation Link Helper
     public static function active($path) {
         return (self::uri() === '/' . trim((string)$path, '/')) ? 'active' : '';
-    }   
+    }
 
     public static function uri() {
         return self::$current_uri;
-    }   
+    }
 
     // [CONFIG] Base URL Normalization Helper
     public static function url($path = '') {$base_url = defined('PQ_BASE') ? PQ_BASE : '';
         return rtrim($base_url, '/') . '/' . ltrim((string)$path, '/');
-    }   
+    }
 
     public static function path($path = '') {
         return self::url($path);
-    }   
+    }
 }
 
 // [CONFIG] Automatic Directory Route Generator
@@ -118,7 +118,7 @@ if (!function_exists('autoRoute')) {
  * [NEW] DSL Proxy Object with Built-in Trailing Slash Normalization
  */
 class PQRouteProxy {
-    
+
     private function normalizeRoutes($menu_list) {
         $result = [];
         foreach ($menu_list as $item) {
@@ -179,7 +179,7 @@ if (!function_exists('pq_url')) {
                     if ($p &&$f) {
                         PQRouter::set($p, $f,$t);
                     }
-                } 
+                }
                 else if (is_string($key)) {
                     PQRouter::set($key, $val,$type);
                 }

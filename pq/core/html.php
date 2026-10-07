@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * : PQ XSS Protection & Tag Control Builder Engine
  * FILENAME  : /pq/core/html.php
- * COMPONENT : PQ XSS Protection & Tag Control Builder Engine
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
 

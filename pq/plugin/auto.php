@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Automation Task & Cron Scheduler Plugin Core
  * FILENAME  : /pq/plugin/auto.php
- * COMPONENT : PQ Automation Task & Cron Scheduler Plugin Core
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
@@ -56,7 +56,7 @@ class PQ_Auto_Engine {
         if ($this->mode === 'server' || isset($_GET['pq_auto_trigger'])) {
             $cache_dir = defined('PQ_TMP') ? PQ_TMP : dirname(__DIR__) . '/tmp';
             $log_file = $cache_dir . "/last_" . md5($this->time_rule) . ".time";
-            
+
             $last_run = file_exists($log_file) ? (int)file_get_contents($log_file) : 0;
             $interval_seconds = $minutes * 60;
 
@@ -82,7 +82,7 @@ class PQ_Auto_Engine {
                 $this->log("Client Worker Webhook Executed target -> " . $target_script);
             }
             $this->reset();
-            exit; 
+            exit;
         }
 
         if ($this->mode === 'server') {

@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Trace Debugger & Execution Logger Core Engine
  * FILENAME  : /pq/core/trace.php 
- * COMPONENT : PQ Trace Debugger & Execution Logger Core Engine
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 

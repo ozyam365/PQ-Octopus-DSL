@@ -1,12 +1,103 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ File Processing Core Module
  * FILENAME  : /pq/core/file.php 
- * COMPONENT : PQ Engine File Matrix Core (v1.2.6 Security Double Lock)
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
+class PQFileStreamTask {
+    private $filePath;
+    private $chunkSize = 1000;
+    private $intervalMs = 0;
+    private $keepAlive = false;
 
+    public function __construct($filePath) {
+        $this->filePath = $filePath;
+    }
+
+    public function chunk($size) {
+        $this->chunkSize = max(1, (int)$size);
+        return $this;
+    }
+
+    public function interval($ms) {
+        if (is_string($ms)) {
+            if (str_contains($ms, 'ms')) {
+                $this->intervalMs = (int)str_replace('ms', '', $ms);
+            } elseif (str_contains($ms, 's')) {
+                $this->intervalMs = (int)str_replace('s', '', $ms) * 1000;
+            } else {
+                $this->intervalMs = (int)$ms;
+            }
+        } else {
+            $this->intervalMs = (int)$ms;
+        }
+        return $this;
+    }
+
+    public function keepalive($enable = true) {
+        $this->keepAlive = (bool)$enable;
+        return $this;
+    }
+
+    public function run(callable $callback) {
+        if (!file_exists($this->filePath)) {
+            throw new \Exception("[PQ-E6001] File not found: " . $this->filePath);
+        }
+
+        $handle = fopen($this->filePath, "r");
+        if (!$handle) {
+            throw new \Exception("[PQ-E6002] Failed to open file stream: " . $this->filePath);
+        }
+
+        $buffer = [];
+        while (($line = fgets($handle)) !== false) {
+            $buffer[] = trim($line);
+
+            if (count($buffer) >= $this->chunkSize) {
+                $collection = new PQBigChunkCollection($buffer);
+                $callback($collection);
+                $buffer = [];
+
+                if ($this->keepAlive && ob_get_level() > 0) {
+                    @ob_flush();
+                    @flush();
+                }
+
+                if ($this->intervalMs > 0) {
+                    usleep($this->intervalMs * 1000);
+                }
+            }
+        }
+
+        if (!empty($buffer)) {
+            $collection = new PQBigChunkCollection($buffer);
+            $callback($collection);
+            unset($buffer);
+        }
+
+        fclose($handle);
+    }
+}
+
+class PQFileReadProxy {
+    private $filePath;
+
+    public function __construct($filePath) {
+        $this->filePath = $filePath;
+    }
+
+    // 뒤에 .big()이 체이닝될 때
+    public function big() {
+        return new PQFileStreamTask($this->filePath);
+    }
+
+    // 일반 변수 대입이나 echo 시 기존처럼 파일 전체 텍스트 반환
+    public function __toString() {
+        return file_exists($this->filePath) ? (string)file_get_contents($this->filePath) : '';
+    }
+}
 class FileMaker {
     private $target_path = "";
     private $temp_file = null;
@@ -124,7 +215,9 @@ class FileMaker {
     }
 
     // --- [2. FILE & DIRECTORY HANDLING] ---
-    public function read($f) { return file_exists($f) ? file_get_contents($f) : false; }
+	public function read($f) {
+        return new PQFileReadProxy($f);
+    }		
     public function write($f, $d) { return file_put_contents($f, $d); }
     public function append($f, $d) { return file_put_contents($f, $d, FILE_APPEND); }
     

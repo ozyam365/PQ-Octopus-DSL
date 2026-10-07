@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.8)
+ * PQ Database Control Core Module
  * FILENAME  : /pq/core/db.php  
- * COMPONENT : PQ Fluent Database Query Builder Core
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
 
@@ -12,7 +12,7 @@ class DBMaker implements IteratorAggregate {
     public $table = '', $wheres = [], $joins = [], $orders = [], $groups = [], $havings = [], $fields = '*', $limit = '';
     private $pending_sql = '';
     private $dist_column = null;
-    
+	
     // [CONFIG] Connection Health Check
     public function ping() {
         try { 
@@ -22,7 +22,42 @@ class DBMaker implements IteratorAggregate {
             return false; 
         }
     }
+	public function __toString() {
+        return "DBMaker";
+    }	
+	public function begin() {
+		$this->connect();
+		if ($this->conn && $this->conn instanceof \mysqli) {
+			@mysqli_begin_transaction($this->conn);
+		} else {
+			@mysqli_query($this->conn, "START TRANSACTION");
+		}
+		// Query Builder 상태 초기화하여 이전 쿼리 상태 오염 방지
+		$this->pending_sql = '';
+		return $this;
+	}
 
+	public function commit() {
+		$this->connect();
+		if ($this->conn && $this->conn instanceof \mysqli) {
+			@mysqli_commit($this->conn);
+		} else {
+			@mysqli_query($this->conn, "COMMIT");
+		}
+		$this->pending_sql = '';
+		return $this;
+	}
+
+	public function rollback() {
+		$this->connect();
+		if ($this->conn && $this->conn instanceof \mysqli) {
+			@mysqli_rollback($this->conn);
+		} else {
+			@mysqli_query($this->conn, "ROLLBACK");
+		}
+		$this->pending_sql = '';
+		return $this;
+	}
     /**
      * [CONFIG] Database Connection Initialization
      * Loads credentials from /set/cfg_db.php with fallback defaults.
@@ -477,6 +512,20 @@ class DBMaker implements IteratorAggregate {
         while ($row = mysqli_fetch_assoc($res)) $rows[] = (object)$row; 
         return new ArrayIterator($rows);
     }
+	/**
+	 * =========================================================
+	 * Big Data & Long-Running Task Mode Switching
+	 * Usage: db.@users.where("status = 'P'").big().chunk(1000)
+	 * =========================================================
+	 */
+	public function big() {
+		// 현재 QueryBuilder가 조립한 SELECT SQL 및 테이블 객체를 Big 엔진으로 전달
+		if (isset($GLOBALS['big']) && method_exists($GLOBALS['big'], 'bind')) {
+			return $GLOBALS['big']->bind($this);
+		}
+		
+		return new PQBigTask($this);
+	}	
 }
 
 /**

@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Engine View System & Universal Penetration Core
  * FILENAME  : /pq/engine/view.php
- * COMPONENT : PQ Engine View System & Universal Penetration Core
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
@@ -26,7 +26,7 @@ function pq_view($view_name, $vars = []) {
     if (!file_exists($view_path)) {
         throw new \RuntimeException("PQ View Error: View resource file not found at path: " . htmlspecialchars($view_path));
     }
-    
+
     // [CONFIG] Cache Directory & Expiration Monitoring
     $cache_dir = defined('PQ_TMP') ? PQ_TMP : dirname(__DIR__, 1) . '/tmp';
     if (!is_dir($cache_dir)) mkdir($cache_dir, 0755, true);
@@ -45,7 +45,7 @@ function pq_view($view_name, $vars = []) {
     }
 
     $GLOBALS['pq_runner_placeholders'] = [];
-    
+
     try {
         $content = file_get_contents($view_path);
         $content = str_replace("\r", "", $content);
@@ -53,7 +53,7 @@ function pq_view($view_name, $vars = []) {
         // [CONFIG] Inline Block Compilation Injection
         $content = preg_replace_callback('/\[\[\s*(.*?)\s*\]\]/s', function($m) {
             $inner = trim($m[1]);
-            
+
             // Output Expression Injection [[= ... ]]
             if (isset($inner[0]) && $inner[0] === '=') {
                 $payload = trim(substr($inner, 1));
@@ -61,7 +61,7 @@ function pq_view($view_name, $vars = []) {
                     $payload = pq_compile_expr($payload);
                 }
                 return '<?php echo pq_clean(' . $payload . '); ?>';
-            } 
+            }
             // Logic Control Injection [[ if/foreach... ]]
             else {
                 if (function_exists('pq_ready')) {
@@ -95,7 +95,7 @@ class PQLayoutHelper {
 }
 
 // Global View Instances Initializations
-$view = new PQLayoutHelper(); 
+$view = new PQLayoutHelper();
 $GLOBALS['view'] = $view;
 $GLOBALS['view_engine'] = new PQLayoutHelper();
 ?>

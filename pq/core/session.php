@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Engine Session Matrix Core Engine
  * FILENAME  : /pq/core/session.php
- * COMPONENT : PQ Engine Session Matrix Core Engine
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 

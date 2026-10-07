@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Date and Time Processing Core Module
  * FILENAME  : /pq/core/date.php  
- * COMPONENT : PQ Date & Time Manipulation Matrix
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
 

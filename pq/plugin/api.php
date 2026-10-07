@@ -1,15 +1,15 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ API Core Acceleration Plugin Engine
  * FILENAME  : /pq/plugin/api.php
- * COMPONENT : PQ API Core Acceleration Plugin Engine
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
 class api {
     private static $instance = null;
-    
+
     private $target_url = "";
     private $req_method = "GET";
     private $req_params = [];
@@ -93,7 +93,7 @@ class api {
                 $final_url .= (str_contains($final_url, '?') ? '&' : '?') . $query_string;
             } else {
                 $content_body = $query_string;
-                
+
                 // Ensure default x-www-form-urlencoded header for non-GET requests
                 $has_type = false;
                 foreach ($this->req_headers as $h) {
@@ -148,7 +148,7 @@ class api {
         $this->req_method = "POST";
         $this->req_params = [];
         $this->raw_body = json_encode($data, JSON_UNESCAPED_UNICODE);
-        
+
         return $this->send();
     }
 }
@@ -162,8 +162,8 @@ if (!function_exists('api_pq')) {
 }
 
 if (!function_exists('api')) {
-    function api() { 
-        return api_pq(); 
+    function api() {
+        return api_pq();
     }
 }
 ?>

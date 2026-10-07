@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Excel File Processing Core Module
  * FILENAME  : /pq/core/excel.php 
- * COMPONENT : PQ Excel Core
+ * UPDATE :  2026-10-07 PM 07:01  
  * =========================================================
  */
 

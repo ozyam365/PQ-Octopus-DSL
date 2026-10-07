@@ -1,9 +1,9 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
+ * PQ Engine UI Helper & Utility Matrix Engine
  * FILENAME  : /pq/core/util.php 
- * COMPONENT : PQ Engine UI Helper & Utility Matrix Engine
+ * UPDATE :  2026-10-07 PM 07:01 
  * =========================================================
  */
 
