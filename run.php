@@ -1,7 +1,6 @@
 <?php
 /**
  * =========================================================
- * PQ VERSION (BETA VERSION 9.1.7)
  * FILENAME  : /run.php
  * COMPONENT : Core Bootstrapper, Dependency Router & Layout Pipeline
  * =========================================================
@@ -11,8 +10,23 @@ ob_start();
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+if (isset($_GET['lang'])) {
+    if ($_GET['lang'] == 'en') {
+        $_SESSION['lang'] = 'en';
+    } else {
+        $_SESSION['lang'] = 'ko'; 
+    }
+}
+$now_lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'ko';
+
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+// PQ version
+define('PQ_VERSION', "FIRE 9.1.7");
+define('PQ_DEBUG', true);
 
 // Virtual directory path configuration (Set '' or '/' for root execution)
 define('PQ_VIRTUAL', '/');
@@ -30,8 +44,8 @@ define('ATTACH_DIR', PQ_DIR . '/attach/');
 $request_path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 define('PQ_SELF', $request_path);
 
-define('PQ_VERSION', "BETA VERSION 9.1.7");
 define('PQ_DN', "https://drive.google.com/drive/folders/16LwbBFdB-gRCtyI3FEfhx2UsnWsQ6hZO?usp=drive_link");
+
 $pq_version = PQ_VERSION;
 
 if (!defined('APP_SECRET')) {
@@ -50,7 +64,7 @@ if (!function_exists('layout')) {
 $core = [
     'pin', 'date', 'db', 'excel', 'file', 'http', 'form',
     'func', 'list', 'object', 'session', 'cookie',
-    'text', 'rgx', 'html', 'trace', 'auth', 'pq', 'util',
+    'text', 'rgx', 'html', 'trace', 'auth', 'pq', 'util','big',
     'ret'
 ];
 foreach ($core as $file) {
@@ -77,7 +91,22 @@ if (file_exists(PQ_DIR . "/pq/plugin/app.php")) {
         $app = $GLOBALS['app'];
     }
 }
-
+// EMAIL PLUGIN BOOTSTRAP
+if (file_exists(PQ_DIR . "/pq/plugin/email.php")) {
+    require_once PQ_DIR . "/pq/plugin/email.php";
+    
+    // email 예약어 객체 전역 할당
+    $GLOBALS['email'] = new PQMail();
+    $email = $GLOBALS['email'];
+}
+// CRAWLER PLUGIN BOOTSTRAP
+if (file_exists(PQ_DIR . "/pq/plugin/crawler.php")) {
+    require_once PQ_DIR . "/pq/plugin/crawler.php";
+    
+    // crawler 예약어 객체 전역 할당
+    $GLOBALS['crawler'] = new PQCrawler();
+    $crawler = $GLOBALS['crawler'];
+}
 /* ==========================================================
  * 4. ROUTER REGISTER
  * ========================================================== */
