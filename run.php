@@ -1,8 +1,9 @@
 <?php
 /**
  * =========================================================
+ * Core Bootstrapper, Dependency Router & Layout Pipeline
  * FILENAME  : /run.php
- * COMPONENT : Core Bootstrapper, Dependency Router & Layout Pipeline
+ * UPDATE :  2026-10-09 PM 07:12
  * =========================================================
  */
 ob_start();
@@ -24,7 +25,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // PQ version
-define('PQ_VERSION', "FIRE 9.2.6");
+define('PQ_VERSION', "FIRE 9.2.7");
 define('PQ_DEBUG', true);
 define('PQ_RULE', 'HIGH');
 
