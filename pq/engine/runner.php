@@ -155,6 +155,8 @@ function pq_output_func($ctx){
  * Expression Compiler Pipeline
  */
 function pq_compile_expr($expr) {
+	$expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/i', '\$$1->$2(', $expr);
+
     if (preg_match('/(\$[a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', $expr, $m)) {
         throw new \RuntimeException(
             "[PQ-E1004] Array variable ({$m[1]}) cannot use Dot (.) property accessor. Use bracket syntax {$m[1]}['{$m[2]}'] instead."
@@ -166,10 +168,10 @@ function pq_compile_expr($expr) {
         );
     }
 
-    // 1. #object.method() 형태를 $object->method() 로 치환
-    $expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1->$2', $expr);
+// #object.method 또는 #object.property 형태를 $object->method 또는 $object->property 로 치환
+    $expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/i', '\$$1->$2', $expr);
 
-    // 2. 단독 #var 변수를 $var 로 치환
+    // 단독 #var 변수를 $var 로 치환
     $expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)/', '\$$1', $expr);
 
     $expr = preg_replace('/(?<![a-zA-Z0-9_\$->])date\s*\(/i', 'date_pq(', $expr);
@@ -992,8 +994,23 @@ function perform_lexing($content) {
                     }
                 }
             }
-            if ($char === '#' && $state === "NORMAL") {
-                $remain_hash = substr($content, $i + 1);
+			if ($char === '#' && $state === "NORMAL") {
+				$remain_hash = substr($content, $i + 1);
+
+				// Variable property -> {$expression} conversion
+				if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\.attr\s*\((.*?)\)/i', $remain_hash, $m)) {
+					$var_name = $m[1];
+					$attr_expr = pq_compile_expr(trim($m[2]));
+
+					if ($inside_fn && isset($fn_globals['#' . $var_name])) {
+						$output .= "\$GLOBALS['_FN']['{$var_name}']->{" . $attr_expr . "}";
+					} else {
+						$output .= '$' . $var_name . '->{' . $attr_expr . '}';
+					}
+
+					$i += strlen('#' . $m[0]) - 1;
+					continue;
+				}
                 if ($inside_fn && preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)/', $remain_hash, $gm) && isset($fn_globals['#' . $gm[1]])) {
                     $var_name = $gm[1];
                     $output .= "\$GLOBALS['_FN']['{$var_name}']";
