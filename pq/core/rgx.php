@@ -3,7 +3,7 @@
  * =========================================================
  * PQ Fluent Regex Builder Core Engine
  * FILENAME  : /pq/core/rgx.php
- * UPDATE :  2026-10-07 PM 07:01
+ * UPDATE :  2026-10-09 PM 07:09
  * =========================================================
  */
 
@@ -12,7 +12,7 @@ class Rgx {
     protected $patterns = []; // Assembled pattern fragments
     protected $is_not = false; // Inverse modifier toggle
     protected $modifiers = ['u']; // Default UTF-8 modifier flag
-    
+
     // Pattern presets
     protected static $presets = [
         'email'      => '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
@@ -118,7 +118,7 @@ class Rgx {
         $last_idx = count($this->patterns) - 1;
         if ($last_idx >= 0) {
             $target = $this->patterns[$last_idx];
-            
+
             if (strlen($target) > 1 && !preg_match('/^\[.*\]$/', $target) && !preg_match('/^\(.*\)$/', $target)) {
                 $target = '(?:' . $target . ')';
             }
@@ -180,7 +180,7 @@ class Rgx {
     public function dump() {
         $regex = $this->compile();
         $is_match = $this->match() ? 'TRUE' : 'FALSE';
-        
+
         echo "<pre style='background:#1e1e1e; color:#00ff66; padding:15px; border-radius:8px; font-family:monospace; line-height:1.5; border:1px solid #333;'>";
         echo "<b style='color:#ff007f;'>[PQ RGX DEBUG ENGINE]</b><br>";
         echo "--------------------------------------------------<br>";
@@ -193,16 +193,22 @@ class Rgx {
         return $this;
     }
 
-    /** 
-     * 하이브리드 매칭 메서드 (통합 수정본)
+/**
+     * 하이브리드 매칭 메서드 (2개 인자 완전 지원 수정본)
      * 지원 패턴:
      * 1) rgx($target)->symbol("\n")->match()
-     * 2) rgx($target)->match('/pattern/')
-     * 3) rgx('/pattern/')->match($target)
+     * 2) rgx.match('/pattern/', $target)  👈 2개 인자 완벽 지원!
+     * 3) rgx($target)->match('/pattern/')
      */
-    public function match($input = null): bool {
+    public function match($input = null, $subject = null): bool {
+        // 인자가 2개 들어왔을 때: match('/pattern/', $target)
+        if ($input !== null && $subject !== null) {
+            return (bool)preg_match($input, (string)$subject);
+        }
+
+        // 인자가 1개만 들어왔을 때
         if ($input !== null) {
-            // 인자로 들어온 게 정규식 패턴('/.../' 또는 '~...~')인 경우
+            // 들어온 인자가 정규식 패턴('/.../' 또는 '~...~')인 경우
             if (is_string($input) && (str_starts_with($input, '/') || str_starts_with($input, '~'))) {
                 return (bool)preg_match($input, (string)$this->target);
             }
@@ -217,7 +223,7 @@ class Rgx {
     /** 단일 매칭 문자열 추출 */
     public function find(string $pattern = ''): string {
         if (empty($this->target)) return "";
-        
+
         if ($pattern === '') {
             $pattern = $this->compile();
         } elseif (substr($pattern, 0, 1) !== substr($pattern, -1)) {
