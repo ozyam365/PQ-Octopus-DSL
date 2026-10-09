@@ -511,6 +511,24 @@ function perform_lexing($content) {
     $inside_attr = false;
     $attr_quote = '';
 
+	// =========================================================
+    // [PQ DSL Strict Rule Engine] HIGH 레벨 규칙 검사
+    // =========================================================
+    if (defined('PQ_RULE') && PQ_RULE === 'HIGH') {
+        // foreach (...) as $item 형태의 Pure PHP 달러($) 변수 사용 패턴 감지
+        if (preg_match_all('/foreach\s*\([^\)]+as\s+(?:\$[a-zA-Z_][a-zA-Z0-9_]*\s*=>\s*)?\$([a-zA-Z_][a-zA-Z0-9_]*)/i', $content, $matches)) {
+            $invalid_vars = array_unique($matches[1]);
+            $var_list = implode(', ', array_map(fn($v) => "'\${$v}' → '@{$v}'", $invalid_vars));
+
+            // 개발용 DX 에러 화면으로 깔끔하게 전달하기 위해 Exception 발생 (또는 trigger_error 사용)
+            throw new \RuntimeException(
+                "[PQ DSL Rule Violation] PQ_RULE 레벨이 'HIGH'로 설정되어 있습니다.\n" .
+                "foreach 루프 변수에 PHP 스타일 '$' 대신 PQ 표준 변수 '@'를 사용해야 합니다.\n" .
+                "수정 대상: " . $var_list
+            );
+        }
+    }
+
     for ($i = 0; $i < $len; $i++) {
         $char = $content[$i];
         $next = ($i + 1 < $len) ? $content[$i+1] : "";
@@ -536,15 +554,26 @@ function perform_lexing($content) {
             if ($inside_attr && $char == $attr_quote) { $inside_attr = false; $attr_quote = ''; }
             if ($char === '{' && $next === '{') { $echo_zone_buf = ""; $state = "ECHO_ZONE"; $i++; continue; }
             if ($char === '[' && $next === '[') { $state = "NORMAL"; $output .= "<?php "; $i++; continue; }
-            if ($char === 'i' && substr($content, $i, 3) === "inc") {
-                $remain_line = substr($content, $i);
-                if (preg_match('~^inc\s*\(?\s*["\']([^"\']+)["\']\s*\)?\s*;~i', $remain_line, $match)) {
-                    $clean_path = preg_replace('/@([a-zA-Z0-9_]+)/', '{$$1}', $match[1]);
-                    $clean_path = pq_resolve_path($clean_path);
-                    $output .= "<?php run_pq(PQ_DIR . '/' . \"" . $clean_path . "\", get_defined_vars()); ?>";
-                    $i += (strlen($match[0]) - 1); continue;
-                }
-            }
+			if ($char === 'i' && strncasecmp(substr($content, $i, 3), "inc", 3) === 0) {
+				$remain_line = substr($content, $i);
+				// inc "path"; | inc 'path'; | inc (...); 형태 통합 매칭
+				if (preg_match('~^inc\s*(?:\(\s*(.*?)\s*\)|["\']([^"\']+)["\'])\s*;~i', $remain_line, $match)) {
+					// 괄호 표현식이 있으면 해당 표현식을, 없으면 따옴표 경로를 감싸 사용
+					$raw_expr = !empty($match[1]) ? $match[1] : '"' . $match[2] . '"';
+
+					// /path/ 단축 가상 경로 정제 및 표현식 컴파일
+					$clean_expr = pq_resolve_path($raw_expr);
+					$compiled_expr = pq_compile_expr($clean_expr);
+
+					if ($state === "HTML") {
+						$output .= "<?php run_pq(PQ_DIR . '/' . " . $compiled_expr . ", get_defined_vars()); ?>";
+					} else {
+						$output .= "run_pq(PQ_DIR . '/' . " . $compiled_expr . ", get_defined_vars());";
+					}
+					$i += (strlen($match[0]) - 1);
+					continue;
+				}
+			}
             $output .= $char;
         }
         else if ($state === "ECHO_ZONE") {
@@ -664,7 +693,6 @@ function perform_lexing($content) {
                     continue;
                 }
             }
-
             // lock('key', timeout): 구문 처리
             if ($is_front_boundary && preg_match('/^lock\s*\(\s*(.+?)\s*\)\s*:/i', substr($content, $i), $lock_m)) {
                 $lock_args = pq_compile_expr($lock_m[1]);
@@ -891,23 +919,24 @@ function perform_lexing($content) {
                 continue;
             }
 
-            if ($char === '.') {
-                $after_dot = substr($content, $i + 1, 50);
-                if (preg_match('/^\{@([a-zA-Z_][a-zA-Z0-9_]*)\}/', $after_dot, $m)) {
-                    $output .= '->{$' . $m[1] . '}'; $i += strlen($m[0]); continue;
-                }
-                $after_dot = substr($content, $i + 1, 15);
-                if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*\s*\(?/i', $after_dot)) {
-                    $trimmed_out = rtrim($output);
-                    $last_out_char = substr($trimmed_out, -1);
-                    if (!str_ends_with($trimmed_out, '->')) {
-                        if ($last_out_char === ')' || $last_out_char === '}' || $last_out_char === ']' || preg_match('/[a-zA-Z0-9_]/', $last_out_char)) {
-                            $output .= "->";
-                            continue;
-                        }
-                    }
-                }
-            }
+			if ($char === '.') {
+				$after_dot = substr($content, $i + 1, 50);
+				if (preg_match('/^\{@([a-zA-Z_][a-zA-Z0-9_]*)\}/', $after_dot, $m)) {
+					$output .= '->{$' . $m[1] . '}'; $i += strlen($m[0]); continue;
+				}
+				$after_dot = substr($content, $i + 1, 15);
+				if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*\s*\(?/i', $after_dot)) {
+					$trimmed_out = rtrim($output);
+					$last_out_char = substr($trimmed_out, -1);
+					if (!str_ends_with($trimmed_out, '->')) {
+						// [핵심 수정] 배열 닫기 대괄호 ']' 는 객체 메소드 호출 점(.) 치환 대상에서 제외!
+						if ($last_out_char === ')' || $last_out_char === '}' || preg_match('/[a-zA-Z0-9_]/', $last_out_char)) {
+							$output .= "->";
+							continue;
+						}
+					}
+				}
+			}
             if ($inside_fn && $is_front_boundary && $char === 'g') {
                 $remain_global = substr($content, $i);
                 if (preg_match('/^global\s+(.+?)\s*;/is',$remain_global,$global_m)) {
@@ -998,15 +1027,26 @@ function perform_lexing($content) {
                     continue;
                 }
             }
-            if ($char === 'i' && substr($content, $i, 3) === "inc") {
-                $remain_line = substr($content, $i);
-                if (preg_match('~^inc\s*\(?\s*["\']([^"\']+)["\']\s*\)?\s*;~i', $remain_line, $match)) {
-                    $clean_path = preg_replace('/@([a-zA-Z0-9_]+)/', '{$$1}', $match[1]);
-                    $clean_path = pq_resolve_path($clean_path);
-                    $output .= "run_pq(PQ_DIR . '/' . \"" . $clean_path . "\", get_defined_vars());";
-                    $i += (strlen($match[0]) - 1); continue;
-                }
-            }
+			if ($char === 'i' && strncasecmp(substr($content, $i, 3), "inc", 3) === 0) {
+				$remain_line = substr($content, $i);
+				// inc "path"; | inc 'path'; | inc (...); 형태 통합 매칭
+				if (preg_match('~^inc\s*(?:\(\s*(.*?)\s*\)|["\']([^"\']+)["\'])\s*;~i', $remain_line, $match)) {
+					// 괄호 표현식이 있으면 해당 표현식을, 없으면 따옴표 경로를 감싸 사용
+					$raw_expr = !empty($match[1]) ? $match[1] : '"' . $match[2] . '"';
+
+					// /path/ 단축 가상 경로 정제 및 표현식 컴파일
+					$clean_expr = pq_resolve_path($raw_expr);
+					$compiled_expr = pq_compile_expr($clean_expr);
+
+					if ($state === "HTML") {
+						$output .= "<?php run_pq(PQ_DIR . '/' . " . $compiled_expr . ", get_defined_vars()); ?>";
+					} else {
+						$output .= "run_pq(PQ_DIR . '/' . " . $compiled_expr . ", get_defined_vars());";
+					}
+					$i += (strlen($match[0]) - 1);
+					continue;
+				}
+			}
             if (substr($content, $i, 6) === "import") {
                 $output .= "include_once (defined('PQ_HTML') ? PQ_HTML : (defined('PQ_VIEW') ? PQ_VIEW : dirname(__DIR__, 2) . '/html')) . '/' . ";
                 $i += 5; continue;
@@ -1063,20 +1103,23 @@ function perform_lexing($content) {
 }
 
 function perform_optimization($output) {
+    // 1. 오직 $form->get()으로 시작하는 체이닝에만 안전하게 ->value() 자동 부착
     $output = preg_replace(
-        '/(\$form\s*->\s*get\s*\(.*?\)(?:->[a-zA-Z0-9_]+\s*\(.*?\))*)(?<!->value\(\))(?<!->int\(\))(?<!->string\(\))(?<!->bool\(\))(?<!->float\(\))(?<!->val\(\))(?<!->error\(\))(?<!->run\(\))\s*;/i',
+        '/(\$form\s*->\s*get\s*\([^;]+?\)(?:->[a-zA-Z0-9_]+\s*\([^;]*?\))*)(?<!->value\(\))(?<!->int\(\))(?<!->string\(\))(?<!->bool\(\))(?<!->float\(\))(?<!->val\(\))(?<!->error\(\))(?<!->run\(\))\s*;/i',
         '$1->value();',
         $output
     );
-    $output = preg_replace(
-        '/(\$form\s*->\s*get\s*\(.*?\)(?:->[a-zA-Z0-9_]+\s*\(.*?\))*)(?<!->value\(\))(?<!->int\(\))(?<!->string\(\))(?<!->bool\(\))(?<!->float\(\))(?<!->val\(\))(?<!->error\(\))\s*;/i',
-        '$1->value();',
-        $output
-    );
-    $output = preg_replace('/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*->\s*val\((.*?)\)\s*;/i', '$$1 = val($$1, $2);', $output);
+
+    // 2. 단독 변수 $var->val() 처리 시 배열 오프셋($arr['key'])은 엄격히 제외
+    $output = preg_replace('/(?<!\[)\$([a-zA-Z_][a-zA-Z0-9_]*)\b(?!\s*\[)\s*->\s*val\((.*?)\)\s*;/i', '$$1 = val($$1, $2);', $output);
+
+    // 3. 숏 태그 및 이중 세미콜론 정돈
     $output = preg_replace('/<\?php\s*=\s*/i', '<?= ', $output);
     $output = preg_replace('/;[ \t\n]*;/', ';', $output);
-    $output = preg_replace_callback('/\(\$([a-zA-Z0-9_]+)\)->\{\$([a-zA-Z0-9_]+)\}/i', function($m) { return '$' . $m[1] . '->{' . $m[2] . '}'; }, $output);
+    $output = preg_replace_callback('/\(\$([a-zA-Z0-9_]+)\)->\{\$([a-zA-Z0-9_]+)\}/i', function($m) {
+        return '$' . $m[1] . '->{' . $m[2] . '}';
+    }, $output);
+
     return $output;
 }
 
