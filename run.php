@@ -6,7 +6,6 @@
  * =========================================================
  */
 ob_start();
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -15,7 +14,7 @@ if (isset($_GET['lang'])) {
     if ($_GET['lang'] == 'en') {
         $_SESSION['lang'] = 'en';
     } else {
-        $_SESSION['lang'] = 'ko'; 
+        $_SESSION['lang'] = 'ko';
     }
 }
 $now_lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'ko';
@@ -25,8 +24,9 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // PQ version
-define('PQ_VERSION', "FIRE 9.1.7");
+define('PQ_VERSION', "FIRE 9.2.6");
 define('PQ_DEBUG', true);
+define('PQ_RULE', 'HIGH');
 
 // Virtual directory path configuration (Set '' or '/' for root execution)
 define('PQ_VIRTUAL', '/');
@@ -40,6 +40,7 @@ define('PQ_BASE', rtrim(PQ_URL, '/'));
 define('PQ_HOME', PQ_URL . "/index");
 define('PQ_TMP', PQ_DIR . "/pq/tmp");
 define('ATTACH_DIR', PQ_DIR . '/attach/');
+define('SET_DIR', PQ_DIR . '/attach/');
 
 $request_path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 define('PQ_SELF', $request_path);
@@ -94,7 +95,7 @@ if (file_exists(PQ_DIR . "/pq/plugin/app.php")) {
 // EMAIL PLUGIN BOOTSTRAP
 if (file_exists(PQ_DIR . "/pq/plugin/email.php")) {
     require_once PQ_DIR . "/pq/plugin/email.php";
-    
+
     // email 예약어 객체 전역 할당
     $GLOBALS['email'] = new PQMail();
     $email = $GLOBALS['email'];
@@ -102,7 +103,7 @@ if (file_exists(PQ_DIR . "/pq/plugin/email.php")) {
 // CRAWLER PLUGIN BOOTSTRAP
 if (file_exists(PQ_DIR . "/pq/plugin/crawler.php")) {
     require_once PQ_DIR . "/pq/plugin/crawler.php";
-    
+
     // crawler 예약어 객체 전역 할당
     $GLOBALS['crawler'] = new PQCrawler();
     $crawler = $GLOBALS['crawler'];
@@ -140,8 +141,8 @@ if ($route && is_array($route)) {
     $route_type     = $route['type'] ?? 'page';
     $clean_relative = strtok($relative_path, '?');
 
-    $full_path = (strpos($clean_relative, PQ_DIR) === 0) 
-        ? $clean_relative 
+    $full_path = (strpos($clean_relative, PQ_DIR) === 0)
+        ? $clean_relative
         : PQ_DIR . '/' . ltrim($clean_relative, '/');
 
     if (file_exists($full_path) && is_file($full_path)) {
@@ -165,7 +166,7 @@ $is_main        = ($current_path === '/' || $current_path === '/index' || $curre
 $layout_dir     = $is_admin ? PQ_DIR . '/html/csm/layout' : PQ_DIR . '/html/layout';
 
 if (function_exists('import_pq')) {
-    if (file_exists(PQ_DIR . '/init.pq')) import_pq(PQ_DIR . '/init.pq'); 
+    if (file_exists(PQ_DIR . '/init.pq')) import_pq(PQ_DIR . '/init.pq');
     if (file_exists(PQ_DIR . '/tbl.pq'))  import_pq(PQ_DIR . '/tbl.pq');
 }
 
@@ -177,26 +178,26 @@ if ($layout_use) {
     } else {
         if ($is_admin) {
             $top_file    = "top.pq";
-            $left_file   = "left.pq";            
-            $bottom_file = "bottom.pq";             
+            $left_file   = "left.pq";
+            $bottom_file = "bottom.pq";
         } else {
             if ($is_main) {
                 $top_file    = "m_top.pq";
-                $left_file   = "m_left.pq";            
-                $bottom_file = "m_bottom.pq";                        
+                $left_file   = "m_left.pq";
+                $bottom_file = "m_bottom.pq";
             } else {
                 $top_file    = "s_top.pq";
-                $left_file   = "s_left.pq";            
-                $bottom_file = "s_bottom.pq";                            
-            }       
+                $left_file   = "s_left.pq";
+                $bottom_file = "s_bottom.pq";
+            }
         }
         if (function_exists('run_pq')) run_pq($layout_dir . "/" . $top_file);
         echo '<div class="pq-container">';
-        
+
         if (!$is_main && function_exists('run_pq')) {
             run_pq($layout_dir . "/" . $left_file);
         }
-        
+
         echo '<main class="pq-main">';
         echo '<div class="pq-section">';
     }
