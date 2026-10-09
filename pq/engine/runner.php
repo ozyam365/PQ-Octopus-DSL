@@ -3,7 +3,7 @@
  * =========================================================
  * Core Cache, Security & Execution Engine
  * FILENAME  : /pq/engine/runner.php
- * UPDATE :  2026-10-09 PM 03:00
+ * UPDATE :  2026-10-09 PM 07:09
  * =========================================================
  */
 
@@ -167,8 +167,7 @@ function pq_compile_expr($expr) {
             "[PQ-E1005] Object variable ({$m[1]}) cannot use Bracket (['']) array accessor. Use Dot syntax {$m[1]}.{$m[2]} instead."
         );
     }
-
-// #object.method 또는 #object.property 형태를 $object->method 또는 $object->property 로 치환
+	// #object.method 또는 #object.property 형태를 $object->method 또는 $object->property 로 치환
     $expr = preg_replace('/#([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)/i', '\$$1->$2', $expr);
 
     // 단독 #var 변수를 $var 로 치환
@@ -191,6 +190,23 @@ function pq_compile_expr($expr) {
 
     // 4. 일반 객체 메소드 연쇄 호출 점(.)을 -> 로 변환
     $expr = preg_replace('/(\)|\]|\$[a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/', '$1->$2(', $expr);
+
+	$expr = preg_replace_callback('/(["\'])(.*?)\1/', function($m) {
+        $quote = $m[1];
+        $str_content = $m[2];
+
+        // 코어 예약어를 제외한 순수 @변수만 찢어서 점 연산자로 연결
+        $str_content = preg_replace_callback('/@([a-zA-Z_][a-zA-Z0-9_]*)/', function($vm) use ($quote) {
+            $var_name = $vm[1];
+            // 코어 플러그인/객체 예약어 방어
+            if (in_array($var_name, ['auth','app','url','db','http','session','form','date','time','file','text','cookie','trace','big','pq','lock','navi','email','crawler','rgx'])) {
+                return '@' . $var_name;
+            }
+            return $quote . ' . $' . $var_name . ' . ' . $quote;
+        }, $str_content);
+
+        return $quote . $str_content . $quote;
+    }, $expr);
     return $expr;
 }
 
@@ -1070,7 +1086,7 @@ function perform_lexing($content) {
             }
             $output .= $char;
         }
-        else if ($state === "STRING") {
+		else if ($state === "STRING") {
             if ($char === '\\') { $output .= $char . $next; $i++; continue; }
             if ($char === '[' && $next === '[') {
                 $remain_str = substr($content, $i);
@@ -1089,26 +1105,38 @@ function perform_lexing($content) {
                     continue;
                 }
             }
-            if ($char === '@') {
-                $remain = substr($content, $i + 1);
+			if ($char === '@') {
+				$remain = substr($content, $i + 1);
 
-                // [핵심 보완] STRING 내부에서 코어 및 플러그인 예약어 예외 차단
-                if (preg_match('/^(auth|app|url|db|http|session|form|date|time|file|text|cookie|trace|big|pq|lock|navi|email|crawler|rgx)\.[a-zA-Z_]/i', $remain)) {
-                    $output .= '@';
-                    continue;
-                }
+				// 1. Core en plugin uitzonderingen/keywords negeren
+				if (preg_match('/^(auth|app|url|db|http|session|form|date|time|file|text|cookie|trace|big|pq|lock|navi|email|crawler|rgx)\.[a-zA-Z_]/i', $remain)) {
+					$output .= '@';
+					continue;
+				}
 
-                $prev_char = ($i > 0) ? $content[$i - 1] : '';
-                if (preg_match('/[a-zA-Z0-9_\.\-]/', $prev_char) && preg_match('/^[a-zA-Z0-9_\-]+\.[a-zA-Z]{2,}/', $remain)) {
-                    $output .= '@';
-                    continue;
-                }
+				// 2. E-mailadressen negeren
+				$prev_char = ($i > 0) ? $content[$i - 1] : '';
+				if (preg_match('/[a-zA-Z0-9_\.\-]/', $prev_char) && preg_match('/^[a-zA-Z0-9_\-]+\.[a-zA-Z]{2,}/', $remain)) {
+					$output .= '@';
+					continue;
+				}
 
-                if (preg_match('/^[a-zA-Z_]/', $remain)) {
-                    $output .= '$';
-                    continue;
-                }
-            }
+				// 3. Omzetting van {@var} naar opsplitsing met punt-operator
+				if ($prev_char === '{' && preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\}/', $remain, $m)) {
+					$output = substr($output, 0, -1);
+					$output .= $quote_char . ' . $' . $m[1] . ' . ' . $quote_char;
+					$i += strlen($m[1]) + 1;
+					continue;
+				}
+
+				// 4. Omzetting van losse @var naar opsplitsing met punt-operator
+				if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)/', $remain, $m)) {
+					$var_name = $m[1];
+					$output .= $quote_char . ' . $' . $var_name . ' . ' . $quote_char;
+					$i += strlen($var_name);
+					continue;
+				}
+			}
             if ($char === $quote_char) { $state = "NORMAL"; }
             $output .= $char;
         }
