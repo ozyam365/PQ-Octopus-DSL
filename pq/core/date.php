@@ -2,8 +2,8 @@
 /**
  * =========================================================
  * PQ Date and Time Processing Core Module
- * FILENAME  : /pq/core/date.php  
- * UPDATE :  2026-10-07 PM 07:01  
+ * FILENAME  : /pq/core/date.php
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
@@ -11,10 +11,10 @@ if (!class_exists('PQDate', false)) {
     class PQDate {
         private $dt;
 
-        public function __construct($time = "now") { 
-            $this->reset($time); 
+        public function __construct($time = "now") {
+            $this->reset($time);
         }
-        
+
         // [CONFIG] Date Instance Reset Helper
         public function reset($time) {
             try {
@@ -23,8 +23,8 @@ if (!class_exists('PQDate', false)) {
                 } else {
                     $this->dt = new DateTime($time ?: "now");
                 }
-            } catch (\Exception $e) { 
-                $this->dt = new DateTime(); 
+            } catch (\Exception $e) {
+                $this->dt = new DateTime();
             }
             return $this;
         }
@@ -32,13 +32,24 @@ if (!class_exists('PQDate', false)) {
         public static function now() { return (new self("now"))->format("Y-m-d H:i:s"); }
         public static function today() { return (new self("now"))->format("Y-m-d"); }
         public static function make($time) { return new self($time); }
-        
+
+		/**
+         * Return formatted date or year/timestamp as integer
+         * Supports: date_pq()->format('Y')->int() replacement OR direct date_pq()->int('Y')
+         */
+        public function int($format = null) {
+            if ($format !== null) {
+                return (int)$this->dt->format($format);
+            }
+            return (int)$this->dt->format("Ymd");
+        }
+
         /**
          * Get Last Day of Current Month
          */
-        public function lastDay($as_obj = false) { 
+        public function lastDay($as_obj = false) {
             $last = $this->dt->format("t");
-            return $as_obj ? $this->reset($this->dt->format("Y-m-$last")) : $last; 
+            return $as_obj ? $this->reset($this->dt->format("Y-m-$last")) : $last;
         }
 
         // Fluent Date Chaining Methods
@@ -48,7 +59,7 @@ if (!class_exists('PQDate', false)) {
         public function subMonth($v = 1) { $this->dt->modify("-$v month"); return $this; }
         public function addDay($v = 1)   { $this->dt->modify("+$v day");   return $this; }
         public function subDay($v = 1)   { $this->dt->modify("-$v day");   return $this; }
-        
+
         public function format($f = "Y-m-d H:i:s") { return $this->dt->format($f); }
         public function timestamp() { return $this->dt->getTimestamp(); }
 
@@ -56,9 +67,9 @@ if (!class_exists('PQDate', false)) {
         public function isPast() { return $this->dt < new DateTime(); }
         public function isFuture() { return $this->dt > new DateTime(); }
         public function isWeek() { $w = $this->dt->format("w"); return ($w == 0 || $w == 6); }
-        
-        public function isToday() { 
-            return $this->dt->format("Y-m-d") === (new DateTime())->format("Y-m-d"); 
+
+        public function isToday() {
+            return $this->dt->format("Y-m-d") === (new DateTime())->format("Y-m-d");
         }
 
         public function copy() { return clone $this; }
@@ -113,8 +124,8 @@ if (!class_exists('DateMaker')) { class_alias('PQDate', 'DateMaker'); }
  * Parser internally redirects date(...) -> date_pq(...)
  */
 if (!function_exists('date_pq')) {
-    function date_pq($time = "now") { 
-        return new PQDate($time); 
+    function date_pq($time = "now") {
+        return new PQDate($time);
     }
 }
 ?>
