@@ -21,15 +21,15 @@ class PQCrawler {
     }
 
     /**
-     * 다중 크롤링 타겟 지정 (crawler.targets(@urls))
+     * 다중 크롤링 타겟 지정 (crawler.target(@urls))
      */
-    public function targets($urls) {
+    public function target($urls) {
         $this->currentTargets = is_array($urls) ? $urls : [$urls];
         return $this;
     }
 
     /**
-     * Big 실행 제어 모드로 스위칭 (crawler.targets(@urls).big())
+     * Big 실행 제어 모드로 스위칭 (crawler.target(@urls).big())
      */
     public function big() {
         if (isset($GLOBALS['big']) && method_exists($GLOBALS['big'], 'bind')) {
