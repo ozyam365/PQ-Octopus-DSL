@@ -25,7 +25,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // PQ version
-define('PQ_VERSION', "FIRE 9.2.7");
+define('PQ_VERSION', "FIRE 9.2.9");
 define('PQ_DEBUG', true);
 define('PQ_RULE', 'HIGH');
 
