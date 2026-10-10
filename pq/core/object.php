@@ -136,7 +136,34 @@ class PQObjectEngine implements ArrayAccess {
             $this->data = (array)$data;
         }
     }
+/**
+     * [CORE FIX] Extract scalar value or string representation safely without infinite recursion
+     */
+    public function value() {
+        if (isset($this->data['value'])) {
+            return $this->data['value'];
+        }
+        if (isset($this->data[0])) {
+            return $this->data[0];
+        }
+        // data가 단일 값일 경우
+        if (!is_array($this->data)) {
+            return $this->data;
+        }
+        return '';
+    }
 
+    public function __toString() {
+        try {
+            $val = $this->value();
+            if (is_array($val) || is_object($val)) {
+                return json_encode($val, JSON_UNESCAPED_UNICODE);
+            }
+            return (string)$val;
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
     /**
      * jQuery-style .attr() method (prevents null storage overriding via variadic arguments)
      */

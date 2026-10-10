@@ -3,7 +3,7 @@
  * =========================================================
  * PQ Fluent Regex Builder Core Engine
  * FILENAME  : /pq/core/rgx.php
- * UPDATE :  2026-10-09 PM 07:09
+ * UPDATE    : 2026-10-10 PM 04:50
  * =========================================================
  */
 
@@ -41,8 +41,16 @@ class Rgx {
         'symbol' => '`~!@#\$%\^&\*\(\)_\+=\-\[\]\{\}\\\|;:\'",\.<>\/\?]'
     ];
 
-    public function __construct($target = ''){
-        $this->target = $target;
+    public function __construct($target_or_pattern = '') {
+        if (is_object($target_or_pattern)) {
+            $target_or_pattern = (string)$target_or_pattern;
+        }
+
+        if (is_string($target_or_pattern) && (str_starts_with($target_or_pattern, '/') || str_starts_with($target_or_pattern, '~'))) {
+            $this->patterns[] = trim($target_or_pattern, '/~iug');
+        } else {
+            $this->target = $target_or_pattern;
+        }
     }
 
     // --- [1. BUILDER PIPELINE METHODS] ---
@@ -85,7 +93,7 @@ class Rgx {
     }
 
     public function text($str) {
-        $this->patterns[] = preg_quote($str, '/');
+        $this->patterns[] = preg_quote((string)$str, '/');
         return $this;
     }
 
@@ -103,7 +111,7 @@ class Rgx {
         if ($char === '') {
             $this->patterns[] = '[' . self::$types['symbol'] . ']';
         } else {
-            $this->patterns[] = preg_quote($char, '/');
+            $this->patterns[] = preg_quote((string)$char, '/');
         }
         return $this;
     }
@@ -171,11 +179,6 @@ class Rgx {
     }
 
     // --- [3. EXECUTION & DEBUG METHODS] ---
-    public function compile() {
-        $raw_pattern = implode('', $this->patterns);
-        $flags = implode('', $this->modifiers);
-        return '/' . $raw_pattern . '/' . $flags;
-    }
 
     public function dump() {
         $regex = $this->compile();
@@ -185,44 +188,79 @@ class Rgx {
         echo "<b style='color:#ff007f;'>[PQ RGX DEBUG ENGINE]</b><br>";
         echo "--------------------------------------------------<br>";
         echo "<span style='color:#569cd6;'>Regex:</span>  " . htmlspecialchars($regex) . "<br>";
-        echo "<span style='color:#569cd6;'>Target:</span> \"" . htmlspecialchars($this->target) . "\"<br>";
+        echo "<span style='color:#569cd6;'>Target:</span> \"" . htmlspecialchars((string)$this->target) . "\"<br>";
         echo "<span style='color:#569cd6;'>Match:</span>  <b style='color:" . ($is_match === 'TRUE' ? '#00ff66' : '#ff3333') . ";'>" . $is_match . "</b><br>";
         echo "--------------------------------------------------";
         echo "</pre>";
 
         return $this;
     }
+public function compile() {
+        // PQObjectEngine 객체가 섞여 있어도 내부 값을 안전하게 추출
+        $clean_patterns = array_map(function($p) {
+            if (is_object($p)) {
+                if (method_exists($p, 'value')) return (string)$p->value();
+                if (method_exists($p, 'get')) return (string)$p->get();
+                if (isset($p->value)) return (string)$p->value;
+                if (isset($p->data)) return (string)$p->data;
+                if (method_exists($p, '__toString')) return (string)$p;
+                return ''; // 문자열 변환 불가 객체 시 빈값 방어
+            }
+            return (string)$p;
+        }, $this->patterns);
+
+        $raw_pattern = implode('', $clean_patterns);
+        $flags = implode('', $this->modifiers);
+        return '/' . $raw_pattern . '/' . $flags;
+    }
 
 /**
-     * 하이브리드 매칭 메서드 (2개 인자 완전 지원 수정본)
-     * 지원 패턴:
-     * 1) rgx($target)->symbol("\n")->match()
-     * 2) rgx.match('/pattern/', $target)  👈 2개 인자 완벽 지원!
-     * 3) rgx($target)->match('/pattern/')
+     * 하이브리드 매칭 메서드 (무한 루프/메모리 고갈 방지)
      */
     public function match($input = null, $subject = null): bool {
-        // 인자가 2개 들어왔을 때: match('/pattern/', $target)
+		$unwrap = function($v) {
+            if (is_object($v)) {
+                if (method_exists($v, 'value')) {
+                    $res = $v->value();
+                    return is_scalar($res) ? (string)$res : json_encode($res);
+                }
+                if (method_exists($v, 'attr')) {
+                    $res = $v->attr('value');
+                    if ($res !== null) return (string)$res;
+                }
+                return (string)$v;
+            }
+            return (string)$v;
+        };
+
+        // 1) 인자가 2개 들어왔을 때
         if ($input !== null && $subject !== null) {
-            return (bool)preg_match($input, (string)$subject);
+            return (bool)preg_match($unwrap($input), $unwrap($subject));
         }
 
-        // 인자가 1개만 들어왔을 때
+        // 2) 인자가 1개 들어왔을 때
         if ($input !== null) {
-            // 들어온 인자가 정규식 패턴('/.../' 또는 '~...~')인 경우
-            if (is_string($input) && (str_starts_with($input, '/') || str_starts_with($input, '~'))) {
-                return (bool)preg_match($input, (string)$this->target);
+            $str_input = $unwrap($input);
+
+            if (str_starts_with($str_input, '/') || str_starts_with($str_input, '~')) {
+                return (bool)preg_match($str_input, $unwrap($this->target));
             }
-            // 패턴이 아니라 대상 문자열일 경우 $target으로 갱신
-            $this->target = $input;
+
+            if (!empty($this->patterns)) {
+                $this->target = $str_input;
+            } else {
+                $this->patterns[] = $str_input;
+            }
         }
 
         $regex = $this->compile();
-        return (bool)preg_match($regex, (string)$this->target);
+        return (bool)preg_match($regex, $unwrap($this->target));
     }
 
     /** 단일 매칭 문자열 추출 */
     public function find(string $pattern = ''): string {
-        if (empty($this->target)) return "";
+        $str_target = (string)$this->target;
+        if (empty($str_target)) return "";
 
         if ($pattern === '') {
             $pattern = $this->compile();
@@ -230,34 +268,34 @@ class Rgx {
             $pattern = '/' . preg_quote($pattern, '/') . '/i';
         }
 
-        if (preg_match($pattern, $this->target, $matches)) {
+        if (preg_match($pattern, $str_target, $matches)) {
             return $matches[0] ?? "";
         }
         return "";
     }
 
-    public function get($target = null){
+    public function get($target = null) {
         if ($target !== null) {
-            $this->target = $target;
+            $this->target = (string)$target;
         }
 
         $regex = $this->compile();
-        preg_match_all($regex, $this->target, $matches);
+        preg_match_all($regex, (string)$this->target, $matches);
 
         return $matches[0] ?? [];
     }
 
     public function replace($replacement, $target = null) {
         if ($target !== null) {
-            $this->target = $target;
+            $this->target = (string)$target;
         }
         $regex = $this->compile();
-        return preg_replace($regex, $replacement, $this->target);
+        return preg_replace($regex, (string)$replacement, (string)$this->target);
     }
 
     public function split() {
         $regex = $this->compile();
-        return preg_split($regex, $this->target);
+        return preg_split($regex, (string)$this->target);
     }
 
     public function clean() {
@@ -266,18 +304,24 @@ class Rgx {
 
     public function count() {
         $regex = $this->compile();
-        return (int)preg_match_all($regex, $this->target);
+        return (int)preg_match_all($regex, (string)$this->target);
     }
 
     public function remove() {
         return $this->clean();
     }
 
-    public function csv($value, $sep = ','){
+    public function csv($value, $sep = ',') {
         $sep = preg_quote($sep, '/');
-        $this->patterns[] = '(^|' . $sep . ')' . preg_quote($value, '/') . '(' . $sep . '|$)';
+        $this->patterns[] = '(^|' . $sep . ')' . preg_quote((string)$value, '/') . '(' . $sep . '|$)';
         return $this;
     }
+
+    // --- [MAGIC & ENGINE COMPATIBILITY] ---
+    public function has(): bool { return $this->match(); }
+    public function bool(): bool { return $this->match(); }
+    public function __toString(): string { return $this->compile(); }
+    public function __invoke($input = null) { return $this->match($input); }
 }
 
 // --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
