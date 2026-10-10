@@ -3,10 +3,12 @@
  * =========================================================
  * PQ Date and Time Processing Core Module
  * FILENAME  : /pq/core/date.php
- * UPDATE :  2026-10-07 PM 07:01
+ * UPDATE    : 2026-10-10 PM 02:27
  * =========================================================
  */
-
+if (file_exists(__DIR__ . '/date_lunar.php')) {
+    require_once __DIR__ . '/date_lunar.php';
+}
 if (!class_exists('PQDate', false)) {
     class PQDate {
         private $dt;
@@ -28,12 +30,67 @@ if (!class_exists('PQDate', false)) {
             }
             return $this;
         }
-
-        public static function now() { return (new self("now"))->format("Y-m-d H:i:s"); }
+		public static function now() { return new self("now"); }
         public static function today() { return (new self("now"))->format("Y-m-d"); }
-        public static function make($time) { return new self($time); }
+        public static function make($time = "now") { return new self($time); }
 
-		/**
+        /**
+         * [NEW CORE UTILITY 1] 10보다 작은지 여부 판단해서 작을 경우 뒷 한 자리 추출
+         */
+        public static function cutzero($arg) {
+            if ($arg) {
+                if ($arg < 10) {
+                    $arglen = strlen((string)$arg);
+                    if ($arglen > 1) $arg = substr((string)$arg, -1, 1);
+                }
+                return $arg;
+            } else {
+                return;
+            }
+        }
+
+        /**
+         * [NEW CORE UTILITY 2] 10보다 작은지 여부 판단해서 작을 경우 앞에다가 0 붙임
+         */
+        public static function addzero($arg) {
+            if ($arg) {
+                if ($arg < 10) {
+                    $arglen = strlen((string)$arg);
+                    if ($arglen <= 1) $arg = "0" . $arg;
+                }
+                return $arg;
+            } else {
+                return;
+            }
+        }
+
+        /**
+         * [NEW CORE UTILITY 3] 지정한 자리수 만큼 0 채움 (zerofill)
+         */
+        public static function zerofill($arg, $val = null) {
+            // 인자가 1개만 전달된 경우 ($val 생략 시 현재 객체 값 또는 1인자 처리)
+            if ($val === null) {
+                return sprintf('%02d', (int)$arg);
+            }
+            return sprintf('%0' . (int)$arg . 'd', (int)$val);
+        }
+		public function lunar() {
+			$y = $this->format('Y');
+			$m = $this->format('m');
+			$d = $this->format('d');
+
+			return pq_lunar($y, $m, $d);
+		}
+
+		public function solar($is_leap = false) {
+			// 현재 date 객체의 날짜 정보를 음력으로 간주하여 양력으로 변환
+			$ly = $this->format('Y');
+			$lm = $this->format('m');
+			$ld = $this->format('d');
+
+			return pq_solar($ly, $lm, $ld, $is_leap);
+		}
+        /**
          * Return formatted date or year/timestamp as integer
          * Supports: date_pq()->format('Y')->int() replacement OR direct date_pq()->int('Y')
          */
@@ -53,12 +110,44 @@ if (!class_exists('PQDate', false)) {
         }
 
         // Fluent Date Chaining Methods
-        public function addYear($v = 1)  { $this->dt->modify("+$v year");  return $this; }
-        public function subYear($v = 1)  { $this->dt->modify("-$v year");  return $this; }
-        public function addMonth($v = 1) { $this->dt->modify("+$v month"); return $this; }
-        public function subMonth($v = 1) { $this->dt->modify("-$v month"); return $this; }
-        public function addDay($v = 1)   { $this->dt->modify("+$v day");   return $this; }
-        public function subDay($v = 1)   { $this->dt->modify("-$v day");   return $this; }
+		public function copy() {
+			$clone = clone $this;
+			$clone->dt = clone $this->dt; // 내부 DateTime 인스턴스까지 Deep Copy
+			return $clone;
+		}
+
+		// 3. Month 체이닝 연산
+		public function addMonth($months = 1) {
+			$this->dt->modify("+{$months} month");
+			return $this;
+		}
+
+		public function subMonth($months = 1) {
+			$this->dt->modify("-{$months} month");
+			return $this;
+		}
+
+		// 4. Year 체이닝 연산
+		public function addYear($years = 1) {
+			$this->dt->modify("+{$years} year");
+			return $this;
+		}
+
+		public function subYear($years = 1) {
+			$this->dt->modify("-{$years} year");
+			return $this;
+		}
+
+		// 5. Day 체이닝 연산
+		public function addDay($days = 1) {
+			$this->dt->modify("+{$days} day");
+			return $this;
+		}
+
+		public function subDay($days = 1) {
+			$this->dt->modify("-{$days} day");
+			return $this;
+		}
 
         public function format($f = "Y-m-d H:i:s") { return $this->dt->format($f); }
         public function timestamp() { return $this->dt->getTimestamp(); }
@@ -71,8 +160,6 @@ if (!class_exists('PQDate', false)) {
         public function isToday() {
             return $this->dt->format("Y-m-d") === (new DateTime())->format("Y-m-d");
         }
-
-        public function copy() { return clone $this; }
 
         /**
          * Calculate Difference in Days

@@ -2,8 +2,8 @@
 /**
  * =========================================================
  * Core module for PQ form-related processing
- * FILENAME  : /pq/core/form.php  
- * UPDATE :  2026-10-07 PM 07:01  
+ * FILENAME  : /pq/core/form.php
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
@@ -11,8 +11,8 @@ class FormValue {
     private $value;
     private $default = null;
 
-    public function __construct($val) { 
-        $this->value = $val; 
+    public function __construct($val) {
+        $this->value = $val;
     }
 
     public function __invoke() {
@@ -154,8 +154,8 @@ class FormValue {
         return $this;
     }
 
-    public function __toString() { 
-        return (string)$this->value(); 
+    public function __toString() {
+        return (string)$this->value();
     }
 }
 
@@ -163,7 +163,7 @@ class FormMaker {
     private $data = [];
 
     public function __construct() {
-        $this->data = array_merge($_GET, $_POST); 
+        $this->data = array_merge($_GET, $_POST);
     }
 
     public function set($k, $v = null) {
@@ -181,14 +181,21 @@ class FormMaker {
         return $this;
     }
 
-    public function get($key = null) {
-        if ($key === null) {
-            return $this->all();
-        }
-        
-        $data = $this->data[$key] ?? null;
-        return new FormValue($data);
-    }
+	public function get($key = null, $default = null) {
+		if ($key === null) {
+			return $this->all();
+		}
+
+		$data = $this->data[$key] ?? null;
+		$fv = new FormValue($data);
+
+		// 기본값이 들어온 경우 val() 자동 설정
+		if ($default !== null) {
+			$fv->val($default);
+		}
+
+		return $fv;
+	}
 
     public function all($type = null) {
         if ($type === "arr" || $type === "array") {
