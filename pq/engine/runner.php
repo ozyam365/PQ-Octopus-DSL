@@ -532,7 +532,8 @@ function perform_lexing($content) {
 	// =========================================================
     // [PQ DSL Strict Rule Engine] HIGH 레벨 규칙 검사
     // =========================================================
-    if (defined('PQ_RULE') && PQ_RULE === 'HIGH') {
+  /*
+	if (defined('PQ_RULE') && PQ_RULE === 'HIGH') {
         // foreach (...) as $item 형태의 Pure PHP 달러($) 변수 사용 패턴 감지
         if (preg_match_all('/foreach\s*\([^\)]+as\s+(?:\$[a-zA-Z_][a-zA-Z0-9_]*\s*=>\s*)?\$([a-zA-Z_][a-zA-Z0-9_]*)/i', $content, $matches)) {
             $invalid_vars = array_unique($matches[1]);
@@ -546,7 +547,7 @@ function perform_lexing($content) {
             );
         }
     }
-
+*/
     for ($i = 0; $i < $len; $i++) {
         $char = $content[$i];
         $next = ($i + 1 < $len) ? $content[$i+1] : "";
