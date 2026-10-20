@@ -25,7 +25,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // PQ version
-define('PQ_VERSION', "FIRE 9.2.9");
+define('PQ_VERSION', "FIRE 9.2.9b");
 define('PQ_DEBUG', true);
 define('PQ_RULE', 'HIGH');
 
@@ -42,6 +42,7 @@ define('PQ_HOME', PQ_URL . "/index");
 define('PQ_TMP', PQ_DIR . "/pq/tmp");
 define('ATTACH_DIR', PQ_DIR . '/attach/');
 define('SET_DIR', PQ_DIR . '/attach/');
+define('PQ_PATH', PQ_ROOT . $virtual_path);
 
 $request_path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 define('PQ_SELF', $request_path);
