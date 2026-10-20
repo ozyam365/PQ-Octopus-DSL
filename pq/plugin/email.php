@@ -42,8 +42,8 @@ class PQMail {
 
 	public function __construct() {
 		// 1. Web Regulation Standards /set/cfg_email.php
-		$config_path = $_SERVER['DOCUMENT_ROOT'] . '/set/cfg_email.php';
-
+//		$config_path = $_SERVER['DOCUMENT_ROOT'] . '/set/cfg_email.php';
+		$config_path = PQ_PATH . '/set/cfg_email.php';
 		// 2. Check for file existence and load
 		if (file_exists($config_path)) {
 			$this->config = require $config_path;
