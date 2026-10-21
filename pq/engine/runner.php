@@ -3,7 +3,7 @@
  * =========================================================
  * Core Cache, Security & Execution Engine
  * FILENAME  : /pq/engine/runner.php
- * UPDATE :  2026-10-21 PM 10:01
+ * UPDATE :  2026-10-21 PM 10:15
  * =========================================================
  */
 
@@ -805,14 +805,28 @@ function perform_lexing($content) {
                                             }
                                         }
                                         switch ($ctrl_word) {
-                                            case 'has':
-                                                $var_php = str_replace('@', '$', $condition);
-                                                $output .= 'if(isset(' . $var_php . ') && has(' . $var_php . ')){';
-                                                break;
-                                            case 'blank':
-                                                $var_php = str_replace('@', '$', $condition);
-                                                $output .= 'if(!isset(' . $var_php . ') || blank(' . $var_php . ')){';
-                                                break;
+										case 'has':
+											$var_php = str_replace('@', '$', $condition);
+											// 조건식에 연산자(&&, || 등)가 포함되어 있는지 확인
+											if (preg_match('/[&&|\|\|!==|==|>|<]/', $condition)) {
+												// 복합 조건식일 경우 단순 has() 체크로 컴파일
+												$output .= 'if(' . $var_php . '){';
+											} else {
+												// 단독 변수일 경우 기존 isset + has 체크 유지
+												$output .= 'if(isset(' . $var_php . ') && has(' . $var_php . ')){';
+											}
+											break;
+										case 'blank':
+											$var_php = str_replace('@', '$', $condition);
+											// 조건식에 연산자(&&, ||, ==, != 등)가 포함되어 있는지 확인
+											if (preg_match('/[&&|\|\|!==|==|>|<]/', $condition)) {
+												// 복합 조건식일 경우 !blank() 또는 단순 조건문으로 컴파일
+												$output .= 'if(blank(' . $var_php . ')){';
+											} else {
+												// 단독 변수일 경우 기존 !isset + blank 체크 유지
+												$output .= 'if(!isset(' . $var_php . ') || blank(' . $var_php . ')){';
+											}
+											break;
                                             default:
                                                 $output .= $ctrl_word . '(' . $condition . '){';
                                                 break;
