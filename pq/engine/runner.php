@@ -3,7 +3,7 @@
  * =========================================================
  * Core Cache, Security & Execution Engine
  * FILENAME  : /pq/engine/runner.php
- * UPDATE :  2026-10-09 PM 07:09
+ * UPDATE :  2026-10-21 PM 10:01
  * =========================================================
  */
 
@@ -937,7 +937,16 @@ function perform_lexing($content) {
             if ($matched) {
                 continue;
             }
-
+			// =========================================================
+			// [PQ DSL Fix] @변수.urlencode() / @변수.함수() 형태의 문법 설탕 처리
+			// =========================================================
+			if ($char === '.' && preg_match('/^\.urlencode\s*\(\s*(.*?)\s*\)/i', substr($content, $i), $url_m)) {
+				// @file_dir.urlencode($row['attach_file1']) 패턴 처리
+				// 앞선 $file_dir 변수에 . urlencode(...) 문자열 결합으로 매끄럽게 컴파일
+				$output .= ' . urlencode(';
+				$i += strlen('.urlencode(') - 1;
+				continue;
+			}
 			if ($char === '.') {
 				$after_dot = substr($content, $i + 1, 50);
 				if (preg_match('/^\{@([a-zA-Z_][a-zA-Z0-9_]*)\}/', $after_dot, $m)) {
