@@ -2,8 +2,8 @@
 /**
  * =========================================================
  * PQ Engine Text Matrix Core Engine
- * FILENAME  : /pq/core/text.php 
- * UPDATE :  2026-10-07 PM 07:01
+ * FILENAME  : /pq/core/text.php
+ * UPDATE    : 2026-10-24 PM 01:32
  * =========================================================
  */
 
@@ -78,6 +78,19 @@ class PQText {
         return $this;
     }
 
+    /** Alias for htmlspecialchars */
+    public function escape(): self {
+        return $this->special();
+    }
+
+    /** Convert HTML entities back to characters */
+    public function unescape(): self {
+        if ($this->target_val !== '') {
+            $this->target_val = htmlspecialchars_decode($this->target_val, ENT_QUOTES);
+        }
+        return $this;
+    }
+
     /** Pinpoint conversion for < and > symbols */
     public function ltgt(): self {
         if ($this->target_val !== '') {
@@ -104,6 +117,25 @@ class PQText {
         return $this->target(str_replace($search, $replace, $this->target_val));
     }
 
+    /** Wrap target string with prefix and suffix */
+    public function wrap(string $before, string $after = ''): self {
+        if ($after === '') $after = $before;
+        $this->target_val = $before . $this->target_val . $after;
+        return $this;
+    }
+
+    /** Unwrap target string by removing surrounding characters */
+    public function unwrap(string $before, string $after = ''): self {
+        if ($after === '') $after = $before;
+        if (str_starts_with($this->target_val, $before)) {
+            $this->target_val = substr($this->target_val, strlen($before));
+        }
+        if (str_ends_with($this->target_val, $after)) {
+            $this->target_val = substr($this->target_val, 0, -strlen($after));
+        }
+        return $this;
+    }
+
     // --- [3. TRUNCATION & FORMATTING] ---
 
     /** Standard string truncation */
@@ -122,35 +154,35 @@ class PQText {
         $text = $this->target_val;
         if (mb_strlen(preg_replace('/<[^>]*>/', '', $text), 'UTF-8') <= $length) {
             $this->is_cut = false;
-            return $this; 
+            return $this;
         }
 
         $this->is_cut = true;
-        $res = ''; 
-        $total = 0; 
+        $res = '';
+        $total = 0;
         $open_tags = [];
         preg_match_all('/<[^>]+>|[^<]+/', $text, $matches);
-        
+
         foreach ($matches[0] as $match) {
             if (str_starts_with($match, '<')) {
                 if (str_starts_with($match, '</')) {
                     array_pop($open_tags);
                 } elseif (!str_ends_with($match, '/>') && !preg_match('/<(img|br|hr|input)[^>]*>/i', $match)) {
-                    preg_match('/<([^\s>]+)/', $match, $t); 
+                    preg_match('/<([^\s>]+)/', $match, $t);
                     if (isset($t[1])) $open_tags[] = $t[1];
                 }
                 $res .= $match;
             } else {
                 $len = mb_strlen($match, 'UTF-8');
-                if ($total + $len >= $length) { 
-                    $res .= mb_substr($match, 0, $length - $total, 'UTF-8'); 
-                    break; 
+                if ($total + $len >= $length) {
+                    $res .= mb_substr($match, 0, $length - $total, 'UTF-8');
+                    break;
                 }
-                $res .= $match; 
+                $res .= $match;
                 $total += $len;
             }
         }
-        
+
         $this->target_val = $res . implode('', array_map(fn($t) => "</$t>", array_reverse($open_tags)));
         return $this;
     }
@@ -195,6 +227,29 @@ class PQText {
         return $this->target($r);
     }
 
+    /** Date formatting */
+    public function date(string $format = 'Y-m-d H:i:s'): self {
+        if ($this->target_val !== '') {
+            $timestamp = is_numeric($this->target_val) ? (int)$this->target_val : strtotime($this->target_val);
+            if ($timestamp !== false) {
+                $this->target_val = date($format, $timestamp);
+            }
+        }
+        return $this;
+    }
+
+    /** String padding (STR_PAD_RIGHT / STR_PAD_LEFT) */
+    public function pad(int $length, string $pad_string = ' ', int $pad_type = STR_PAD_RIGHT): self {
+        $this->target_val = str_pad($this->target_val, $length, $pad_string, $pad_type);
+        return $this;
+    }
+
+    /** Repeat string */
+    public function repeat(int $times): self {
+        $this->target_val = str_repeat($this->target_val, max(0, $times));
+        return $this;
+    }
+
     /** File extension extractor */
     public function ext(): string {
         return $this->apply_mode(strtolower(pathinfo($this->target_val, PATHINFO_EXTENSION)));
@@ -229,20 +284,17 @@ class PQText {
         return [];
     }
 
-	public function replace(mixed $searchOrPattern, ?string $replace = null): self {
+    public function replace(mixed $searchOrPattern, ?string $replace = null): self {
         if ($replace !== null) {
             $pattern = (string)$searchOrPattern;
-            
-            // 정규식 구분자(/)가 명확히 붙어있는 패턴인지 확인
+
             if (preg_match('/^\/.*\/[a-z]*$/i', $pattern)) {
                 $res = @preg_replace($pattern, $replace, $this->target_val);
             } else {
-                // 단순 문자열 치환
                 $res = str_replace($pattern, $replace, $this->target_val);
             }
             $this->target_val = $res ?? $this->target_val;
         } else {
-            // filter() 조건 기반 치환
             if ($this->rgx_cond !== '') {
                 $res = @preg_replace('/[' . $this->rgx_cond . ']/u', (string)$searchOrPattern, $this->target_val);
                 $this->target_val = $res ?? $this->target_val;
@@ -289,8 +341,33 @@ class PQText {
         return $this->target($result === false ? $this->target_val : $result);
     }
 
-    public function urlencode(): self {
+    /** Simplified URL encoding / decoding */
+    public function urlen(): self {
         return $this->target(rawurlencode($this->target_val));
+    }
+
+    public function urlde(): self {
+        return $this->target(rawurldecode($this->target_val));
+    }
+
+    /** Base64 Encoding & Decoding */
+    public function base64_encode(): self {
+        return $this->target(base64_encode($this->target_val));
+    }
+
+    public function base64_decode(): self {
+        return $this->target(base64_decode($this->target_val));
+    }
+
+    /** Hash generation (md5, sha256, etc.) */
+    public function hash(string $algo = 'md5'): self {
+        return $this->target(hash($algo, $this->target_val));
+    }
+
+    /** JSON Parse / Stringify helper */
+    public function json(bool $assoc = true): mixed {
+        if ($this->isEmpty()) return null;
+        return json_decode($this->target_val, $assoc);
     }
 
     public function encrypt(): string {
@@ -352,7 +429,8 @@ if (!function_exists('text_pq')) {
 
 if (!function_exists('text')) {
     function text(mixed $str = ""): PQText {
-        return text_pq($str);
+        $inst = new PQText();
+        return $inst->target($str);
     }
 }
 ?>
