@@ -3,7 +3,7 @@
  * =========================================================
  * Core Cache, Security & Execution Engine
  * FILENAME  : /pq/engine/runner.php
- * UPDATE :  2026-10-21 PM 10:15
+ * UPDATE :  2026-10-26 PM 7:00
  * =========================================================
  */
 
@@ -807,23 +807,21 @@ function perform_lexing($content) {
                                         switch ($ctrl_word) {
 										case 'has':
 											$var_php = str_replace('@', '$', $condition);
-											// 조건식에 연산자(&&, || 등)가 포함되어 있는지 확인
-											if (preg_match('/[&&|\|\|!==|==|>|<]/', $condition)) {
-												// 복합 조건식일 경우 단순 has() 체크로 컴파일
+											// 연산자(&&, ||, 비교연산자 등) 포함 여부를 정확한 연산자 패턴으로 검사
+											if (preg_match('/(&&|\|\||==|!=|!==|===|>=|<=|<|>)/', $condition)) {
+												// 복합 조건식일 경우 그대로 컴파일 (예: has(@wh_ct && @a > 10))
 												$output .= 'if(' . $var_php . '){';
 											} else {
-												// 단독 변수일 경우 기존 isset + has 체크 유지
+												// 단독 변수일 경우 isset + has 안정성 확보
 												$output .= 'if(isset(' . $var_php . ') && has(' . $var_php . ')){';
 											}
 											break;
+
 										case 'blank':
 											$var_php = str_replace('@', '$', $condition);
-											// 조건식에 연산자(&&, ||, ==, != 등)가 포함되어 있는지 확인
-											if (preg_match('/[&&|\|\|!==|==|>|<]/', $condition)) {
-												// 복합 조건식일 경우 !blank() 또는 단순 조건문으로 컴파일
+											if (preg_match('/(&&|\|\||==|!=|!==|===|>=|<=|<|>)/', $condition)) {
 												$output .= 'if(blank(' . $var_php . ')){';
 											} else {
-												// 단독 변수일 경우 기존 !isset + blank 체크 유지
 												$output .= 'if(!isset(' . $var_php . ') || blank(' . $var_php . ')){';
 											}
 											break;
@@ -1304,7 +1302,23 @@ function pq_render_gorgeous_error(\Throwable $e, $current_file = '') {
 function pq_dump_compile_log() {
     echo "<div style='padding:20px; text-align:center; color:#71717a; font-family:monospace;'>Compile Log Trace Complete.</div>";
 }
+if (!function_exists('has')) {
+    function has($v) {
+        if (is_array($v) || is_object($v) || is_countable($v)) {
+            return !empty($v);
+        }
+        return isset($v) && $v !== '' && $v !== false && $v !== null;
+    }
+}
 
+if (!function_exists('blank')) {
+    function blank($v) {
+        if (is_array($v) || is_object($v) || is_countable($v)) {
+            return empty($v);
+        }
+        return !isset($v) || $v === '' || $v === false || $v === null;
+    }
+}
 if (!function_exists('pq_clean')) { function pq_clean($v) { return $v; } }
 if (!function_exists('pq_raw')) { function pq_raw($v) { return (string)$v; } }
 if (!function_exists('pq_attr')) { function pq_attr($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); } }
