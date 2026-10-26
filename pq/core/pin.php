@@ -2,8 +2,8 @@
 /**
  * =========================================================
  * PQ Core Pin (Variable Binding & Data Processing)
- * FILENAME  : /pq/core/pin.php  
- * UPDATE :  2026-10-07 PM 07:01
+ * FILENAME  : /pq/core/pin.php
+ * UPDATE :  2026-10-26 PM 09:47
  * =========================================================
  */
 
@@ -16,7 +16,7 @@ class PQPin {
 
     /**
      * [Step 1] Batch bind memory reference addresses of target variables
-     * 
+     *
      * @param array $vars Referenced variable array
      * @return self
      */
@@ -30,7 +30,7 @@ class PQPin {
 
     /**
      * [Action] .val(): Batch assign value to all bound variables
-     * 
+     *
      * @param mixed $value Value to assign
      * @return mixed
      */
@@ -43,7 +43,7 @@ class PQPin {
 
     /**
      * [Action] .int(): Batch cast all bound variables to integer
-     * 
+     *
      * @param int|null $default Fallback value on failure (null preserves existing)
      * @return self
      */
@@ -60,7 +60,7 @@ class PQPin {
 
     /**
      * [Action] .string(): Force convert all bound variables to string
-     * 
+     *
      * @param string $default Fallback value
      * @return self
      */
@@ -77,7 +77,7 @@ class PQPin {
 
     /**
      * [Action] .bool(): Convert all bound variables to boolean type
-     * 
+     *
      * @return self
      */
     public function bool(): self {
@@ -89,7 +89,7 @@ class PQPin {
 
     /**
      * [Action] .array(): Batch convert all bound variables to array type
-     * 
+     *
      * @return self
      */
     public function array(): self {
@@ -103,7 +103,7 @@ class PQPin {
 
     /**
      * [Action] .object(): Batch convert all bound variables to object (stdClass) type
-     * 
+     *
      * @return self
      */
     public function object(): self {
@@ -117,7 +117,7 @@ class PQPin {
 
     /**
      * [Action] .clean(): Trim whitespace on string variables
-     * 
+     *
      * @return self
      */
     public function clean(): self {
@@ -131,7 +131,7 @@ class PQPin {
 
     /**
      * [Action] .null(): Convert empty strings ("") or empty arrays ([]) to null
-     * 
+     *
      * @return self
      */
     public function null(): self {
@@ -142,6 +142,14 @@ class PQPin {
         }
         return $this;
     }
+	/**
+	 * [Action] .trim(): .clean()의 직관적 별칭(Alias)
+	 *
+	 * @return self
+	 */
+	public function trim(): self {
+		return $this->clean();
+	}
 }
 
 // --- [ENGINE CORE] SINGLETON BRIDGES & GLOBAL WRAPPERS ---
