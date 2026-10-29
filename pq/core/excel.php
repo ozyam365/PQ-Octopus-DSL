@@ -2,14 +2,14 @@
 /**
  * =========================================================
  * PQ Excel File Processing Core Module
- * FILENAME  : /pq/core/excel.php 
- * UPDATE :  2026-10-07 PM 07:01  
+ * FILENAME  : /pq/core/excel.php
+ * UPDATE :  2026-10-30 AM 12:11
  * =========================================================
  */
 
 // [ENGINE CORE] Auto-load external XLSX libraries
 if (!class_exists('XLSXWriter')) {
-    include_once PQ_DIR . "/assets/xlsx/xlsxwriter.php"; 
+    include_once PQ_DIR . "/assets/xlsx/xlsxwriter.php";
 }
 if (!class_exists('SimpleXLSX')) {
     include_once PQ_DIR . "/assets/xlsx/SimpleXLSX.php";
@@ -45,26 +45,37 @@ class PQ_Excel {
         return $this;
     }
 
-    public function data(array $rows) {
-        foreach($rows as $row) {
-            $displayRow = [];
-            foreach($this->maps as $key => $arr) {
-                // Fallback to empty string if database value is null or missing
-                $db_val = $row[$key] ?? ''; 
-                $displayRow[] = isset($arr[$db_val]) ? (string)$arr[$db_val] : (string)$db_val;
-            }
-            $this->writer->writeSheetRow($this->sheetName, $displayRow);
-        }
-        return $this;
-    }
+	public function data(array $rows) {
+		foreach($rows as $row) {
+			$displayRow = [];
+			foreach($this->maps as $key => $arr) {
+				$db_val = $row[$key] ?? '';
 
+				// 1. For header mapping arrays where $arr is not a value conversion lookup array (e.g., ['1'=>'Use', '0'=>'Unused']),
+				// actually use $db_val
+				if (is_array($arr) && isset($arr[$db_val])) {
+					$val = $arr[$db_val];
+				} else {
+					$val = $db_val;
+				}
+
+				// 2. Numeric data (including 0) is kept as primitive types (int/float) without conversion to strings
+				if (is_numeric($val) && !is_string($val)) {
+					$displayRow[] = $val;
+				} else {
+					$displayRow[] = (string)$val;
+				}
+			}
+			$this->writer->writeSheetRow($this->sheetName, $displayRow);
+		}
+		return $this;
+	}
     public function download($filename = "PQ_Export.xlsx") {
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="'.$filename.'"');
         $this->writer->writeToStdOut();
         exit;
     }
-
     // [ENGINE CORE] Excel Reader Pipeline
     public function upload($filePath) {
         $xlsx = SimpleXLSX::parse($filePath);
