@@ -2,8 +2,8 @@
 /**
  * =========================================================
  * PQ Engine Pagination & Search Matrix Core
- * FILENAME  : /pq/core/list.php  
- * UPDATE :  2026-10-07 PM 07:01  
+ * FILENAME  : /pq/core/list.php
+ * UPDATE :  2026-10-07 PM 07:01
  * =========================================================
  */
 
@@ -19,14 +19,14 @@ if (!function_exists('keyword_link')) {
         }
 
         if (is_array($w)) {
-            $params = [];        
+            $params = [];
             foreach ($w as $i => $val) {
                 if ($val !== '' && $val !== null) {
                     $params[] = $txts . "[" . $i . "]=" . urlencode($val);
                 }
-            }        
+            }
             return implode("&amp;", $params);
-        }        
+        }
         return '';
     }
 }
@@ -58,7 +58,7 @@ if (!function_exists('navi_make')) {
 
         // First Page
         $html .= '<li class="page-item"><a class="page-link" href="'.$url.'&'.$npage.'=1">처음</a></li>';
-        
+
         // Previous Page
         $prev = ($page <= 1) ? 1 : $page - 1;
         $html .= '<li class="page-item"><a class="page-link" href="'.$url.'&'.$npage.'='.$prev.'">이전</a></li>';
@@ -71,8 +71,8 @@ if (!function_exists('navi_make')) {
 
         // Next Page
         $next = ($page >= $totalpg) ? $totalpg : $page + 1;
-        $html .= '<li class="page-item"><a class="page-link text-secondary" href="'.$url.'&'.$npage.'='.$next.'">다음</a></li>';
-        
+        $html .= '<li class="page-item"><a class="page-link" href="'.$url.'&'.$npage.'='.$next.'">다음</a></li>';
+
         // Last Page
         $html .= '<li class="page-item"><a class="page-link" href="'.$url.'&'.$npage.'='.$totalpg.'">끝</a></li>';
 
