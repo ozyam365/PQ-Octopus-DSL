@@ -3,7 +3,7 @@
  * =========================================================
  * PQ Engine Text Matrix Core Engine
  * FILENAME  : /pq/core/text.php
- * UPDATE    : 2026-10-24 PM 01:32
+ * UPDATE    : 2026-11-02 AM 10:13
  * =========================================================
  */
 
@@ -186,7 +186,18 @@ class PQText {
         $this->target_val = $res . implode('', array_map(fn($t) => "</$t>", array_reverse($open_tags)));
         return $this;
     }
-
+/**
+     * Substring extraction (UTF-8 safe version of substr)
+     * Usage: text($str)->sub(0, 5)->val()
+     */
+    public function sub(int $start, ?int $length = null): self {
+        if ($this->target_val !== '') {
+            $this->target_val = $length === null
+                ? mb_substr($this->target_val, $start, null, 'UTF-8')
+                : mb_substr($this->target_val, $start, $length, 'UTF-8');
+        }
+        return $this;
+    }
     /** Append suffix to truncated string */
     public function suffix(string $str = '...'): string {
         if ($this->is_cut) {
